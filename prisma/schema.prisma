@@ -7,12 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ==========================================
+// ENUMS
+// ==========================================
+
 enum Level {
   ENTRY
   MID
   SENIOR
   STAFF
   PRINCIPAL
+  EXECUTIVE
 }
 
 enum Currency {
@@ -21,6 +26,7 @@ enum Currency {
   GBP
   INR
   CAD
+  AUD
 }
 
 enum Source {
@@ -29,44 +35,161 @@ enum Source {
   EXTERNAL
 }
 
+enum ReviewRating {
+  TERRIBLE
+  POOR
+  AVERAGE
+  GOOD
+  EXCELLENT
+}
+
+enum InterviewResult {
+  OFFER
+  REJECT
+  WITHDREW
+}
+
+// ==========================================
+// MODELS
+// ==========================================
+
+model User {
+  id            String             @id @default(cuid())
+  email         String             @unique
+  password_hash String?            
+  created_at    DateTime           @default(now())
+  updated_at    DateTime           @updatedAt
+
+  salaries      SalarySubmission[]
+  reviews       Review[]
+  interviews    Interview[]
+}
+
 model Company {
-  id              String    @id @default(cuid())
+  id              String             @id @default(cuid())
   name            String
-  slug            String    @unique
-  normalized_name String
+  slug            String             @unique // SEO route: /companies/google
+  normalized_name String             @unique // Strict deduplication key
   industry        String?
   headquarters    String?
   founded_year    Int?
   headcount_range String?
+  logo_url        String?
   
-  salaries        Salary[]
+  salaries        SalarySubmission[]
+  reviews         Review[]
+  interviews      Interview[]
   
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
+  created_at      DateTime           @default(now())
+  updated_at      DateTime           @updatedAt
+
+  // Indexing for category filtering and exact match deduplication
+  @@index([industry])
+  @@index([normalized_name])
 }
 
-model Salary {
+model Role {
+  id              String             @id @default(cuid())
+  name            String             
+  slug            String             @unique // SEO route: /salaries/software-engineer
+  category        String             
+  
+  salaries        SalarySubmission[]
+  interviews      Interview[]
+
+  created_at      DateTime           @default(now())
+  updated_at      DateTime           @updatedAt
+  
+  // Grouping similar roles globally
+  @@index([category])
+}
+
+model SalarySubmission {
   id                 String    @id @default(cuid())
-  role               String
+  company_id         String
+  role_id            String
+  user_id            String?   // Nullable ensures preservation if user deletes account
+  
   level              Level
   location           String
   currency           Currency  @default(USD)
+  
   experience_years   Float
+  company_tenure     Float?    
+  
   base_salary        Int
   bonus              Int       @default(0)
-  stock              Int       @default(0)
-  total_compensation Int
+  stock              Int       @default(0) 
+  signing_bonus      Int       @default(0)
+  total_compensation Int       // Denormalized for ultra-fast aggregation
+  
   source             Source    @default(UNVERIFIED)
   confidence_score   Float     @default(0)
   is_verified        Boolean   @default(false)
   
-  company_id         String
   company            Company   @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  role               Role      @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  user               User?     @relation(fields: [user_id], references: [id], onDelete: SetNull)
   
   submitted_at       DateTime  @default(now())
 
-  @@index([company_id, level, location])
-  @@index([total_compensation])
-  @@index([submitted_at])
-  @@index([location, level])
+  // Core Analytics Indexes
+  // 1. Role lookup within a specific company (e.g., Meta Software Engineers)
+  @@index([company_id, role_id, level])
+  // 2. Global role percentiles & comparisons (Pre-sorted for fast limit/offset)
+  @@index([role_id, total_compensation(sort: Desc)]) 
+  // 3. Company-wide compensation metrics
+  @@index([company_id, total_compensation(sort: Desc)]) 
+  // 4. Geographic filtering
+  @@index([location, role_id])                   
+  // 5. Time-series data / Recent submissions
+  @@index([submitted_at(sort: Desc)])
+}
+
+model Review {
+  id                String       @id @default(cuid())
+  company_id        String
+  user_id           String?
+  
+  rating            ReviewRating
+  title             String
+  pros              String       @db.Text
+  cons              String       @db.Text
+  advice_to_mgmt    String?      @db.Text
+  
+  is_current_emp    Boolean
+  employment_status String?     
+  
+  company           Company      @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  user              User?        @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  
+  created_at        DateTime     @default(now())
+
+  // Fast retrieval of recent company reviews
+  @@index([company_id, created_at(sort: Desc)])
+  @@index([rating])
+}
+
+model Interview {
+  id               String           @id @default(cuid())
+  company_id       String
+  role_id          String
+  user_id          String?
+  
+  difficulty       Int              // 1-5 Scale
+  process_length   Int?             // Days
+  result           InterviewResult
+  experience_desc  String           @db.Text
+  questions        String?          @db.Text
+  
+  offer_amount     Int?             
+  
+  company          Company          @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  role             Role             @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  user             User?            @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  
+  created_at       DateTime         @default(now())
+
+  @@index([company_id, role_id])
+  @@index([created_at(sort: Desc)])
 }
