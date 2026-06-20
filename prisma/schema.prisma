@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Seniority {
+enum Level {
   ENTRY
   MID
   SENIOR
@@ -15,39 +15,58 @@ enum Seniority {
   PRINCIPAL
 }
 
+enum Currency {
+  USD
+  EUR
+  GBP
+  INR
+  CAD
+}
+
+enum Source {
+  VERIFIED
+  UNVERIFIED
+  EXTERNAL
+}
+
 model Company {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  logoUrl     String?
-  industry    String?
-  website     String?
+  id              String    @id @default(cuid())
+  name            String
+  slug            String    @unique
+  normalized_name String
+  industry        String?
+  headquarters    String?
+  founded_year    Int?
+  headcount_range String?
   
-  salaries    Salary[]
+  salaries        Salary[]
   
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
 }
 
 model Salary {
-  id                String     @id @default(cuid())
-  title             String     // e.g., "Software Engineer"
-  level             String?    // e.g., "L3", "Senior"
-  seniority         Seniority? 
-  location          String     // e.g., "San Francisco, CA" or "Remote"
-  baseSalary        Int        // Stored in whole numbers
-  equity            Int        @default(0)
-  bonus             Int        @default(0)
-  totalCompensation Int        // base + equity + bonus
-  yoe               Float      // Years of Experience
-  dateReported      DateTime   @default(now())
+  id                 String    @id @default(cuid())
+  role               String
+  level              Level
+  location           String
+  currency           Currency  @default(USD)
+  experience_years   Float
+  base_salary        Int
+  bonus              Int       @default(0)
+  stock              Int       @default(0)
+  total_compensation Int
+  source             Source    @default(UNVERIFIED)
+  confidence_score   Float     @default(0)
+  is_verified        Boolean   @default(false)
   
-  companyId         String
-  company           Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company_id         String
+  company            Company   @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  
+  submitted_at       DateTime  @default(now())
 
-  createdAt         DateTime   @default(now())
-  
-  @@index([companyId])
-  @@index([title])
-  @@index([totalCompensation])
+  @@index([company_id, level, location])
+  @@index([total_compensation])
+  @@index([submitted_at])
+  @@index([location, level])
 }
