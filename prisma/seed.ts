@@ -1,4 +1,4 @@
-import { PrismaClient, Level, Currency, Source, ReviewRating, InterviewResult } from '@prisma/client';
+import { PrismaClient, Level, Currency, Source } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
