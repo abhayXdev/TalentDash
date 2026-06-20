@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Seniority {
+  ENTRY
+  MID
+  SENIOR
+  STAFF
+  PRINCIPAL
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  logoUrl     String?
+  industry    String?
+  website     String?
+  
+  salaries    Salary[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Salary {
+  id                String     @id @default(cuid())
+  title             String     // e.g., "Software Engineer"
+  level             String?    // e.g., "L3", "Senior"
+  seniority         Seniority? 
+  location          String     // e.g., "San Francisco, CA" or "Remote"
+  baseSalary        Int        // Stored in whole numbers
+  equity            Int        @default(0)
+  bonus             Int        @default(0)
+  totalCompensation Int        // base + equity + bonus
+  yoe               Float      // Years of Experience
+  dateReported      DateTime   @default(now())
+  
+  companyId         String
+  company           Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdAt         DateTime   @default(now())
+  
+  @@index([companyId])
+  @@index([title])
+  @@index([totalCompensation])
+}
