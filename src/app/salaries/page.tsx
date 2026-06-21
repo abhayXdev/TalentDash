@@ -1,15 +1,7 @@
 import Link from 'next/link';
 import FilterBar from '@/components/features/FilterBar';
 import { CURRENCY_CONFIG } from '@/config/currency';
-
-function getLevelColor(level: string) {
-  if (['L3', 'SDE_I'].includes(level)) return 'bg-slate-100 text-slate-800 ring-slate-600/20';
-  if (['L4', 'SDE_II'].includes(level)) return 'bg-blue-100 text-blue-800 ring-blue-600/20';
-  if (['L5', 'SDE_III'].includes(level)) return 'bg-indigo-100 text-indigo-800 ring-indigo-600/20';
-  if (['L6', 'STAFF'].includes(level)) return 'bg-purple-100 text-purple-800 ring-purple-600/20';
-  if (['PRINCIPAL', 'IC5'].includes(level)) return 'bg-sky-100 text-sky-800 ring-sky-600/20'; // navy-ish
-  return 'bg-gray-50 text-gray-600 ring-gray-500/10';
-}
+import Badge from '@/components/ui/Badge';
 
 function formatCurrency(amountStr: string, fromCurrency: string, toCurrency: string) {
   let amount = Number(amountStr);
@@ -111,9 +103,7 @@ export default async function SalariesPage({
                         {salary.role}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm">
-                        <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${getLevelColor(salary.level)}`}>
-                          {salary.level}
-                        </span>
+                        <Badge level={salary.level} />
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-[#717171]">
                         {salary.location}
