@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const locationString = searchParams.get('location');
     const currencyString = searchParams.get('currency');
     
-    const sort = searchParams.get('sort') || 'recent'; // recent, highest_tc
+    const sort = searchParams.get('sort') || 'total_comp_desc'; // date_desc, total_comp_desc, total_comp_asc
     
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     let limit = parseInt(searchParams.get('limit') || '25', 10);
@@ -40,10 +40,10 @@ export async function GET(request: NextRequest) {
       where.currency = currencyString as Currency;
     }
 
-    const orderBy: Prisma.SalarySubmissionOrderByWithRelationInput[] = 
-      sort === 'highest_tc' 
-        ? [{ total_compensation: 'desc' }, { id: 'asc' }] 
-        : [{ submitted_at: 'desc' }, { id: 'asc' }];
+    let orderBy: Prisma.SalarySubmissionOrderByWithRelationInput[] = [{ total_compensation: 'desc' }, { id: 'asc' }];
+    if (sort === 'date_desc') orderBy = [{ submitted_at: 'desc' }, { id: 'asc' }];
+    if (sort === 'total_comp_asc') orderBy = [{ total_compensation: 'asc' }, { id: 'asc' }];
+    if (sort === 'total_comp_desc') orderBy = [{ total_compensation: 'desc' }, { id: 'asc' }];
 
     const [totalCount, rawSalaries] = await Promise.all([
       prisma.salarySubmission.count({ where }),

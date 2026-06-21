@@ -109,7 +109,7 @@ export default async function CompanyPage({
       <div className="bg-white p-6 rounded-lg shadow-sm border border-[#EBEBEB] mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-extrabold text-[#222222] capitalize">{company.name}</h1>
+            <h1 className="text-4xl font-bold text-[#222222] capitalize leading-[1.1]">{company.name}</h1>
             <div className="mt-2 flex items-center gap-3 text-sm text-[#717171]">
               {company.industry && <span className="bg-gray-100 px-2 py-1 rounded-md">{company.industry}</span>}
               {company.headquarters && <span>📍 {company.headquarters}</span>}
@@ -131,13 +131,13 @@ export default async function CompanyPage({
       {/* 2. Compensation Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white p-6 rounded-lg shadow-sm border border-[#EBEBEB]">
-          <p className="text-sm font-medium text-[#717171] mb-1">Median Total Compensation</p>
-          <p className="text-3xl font-bold text-[#0369A1]">{formatCurrency(median_total_compensation, primaryCurrency)}</p>
-          <p className="text-xs text-gray-500 mt-2">Computed from {totalRecords} records</p>
+          <p className="text-[13px] font-medium text-[#717171] mb-1">Median Total Compensation</p>
+          <p className="text-[32px] font-bold text-[#0369A1] leading-[1.1]">{formatCurrency(median_total_compensation, primaryCurrency)}</p>
+          <p className="text-xs text-[#717171] mt-2">Computed from {totalRecords} records</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-sm border border-[#EBEBEB]">
-          <p className="text-sm font-medium text-[#717171] mb-1">Compensation Range</p>
-          <p className="text-xl font-bold text-[#222222] mt-2">
+          <p className="text-[13px] font-medium text-[#717171] mb-1">Compensation Range</p>
+          <p className="text-[28px] font-bold text-[#222222] mt-2">
             {formatCurrency(minTC.toString(), primaryCurrency)} – {formatCurrency(maxTC.toString(), primaryCurrency)}
           </p>
         </div>
@@ -205,7 +205,7 @@ export default async function CompanyPage({
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-[#484848] text-right">
                         {formatCurrency(salary.stock, salary.currency)}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-lg font-bold text-[#0369A1] text-right pr-6">
+                      <td className="whitespace-nowrap px-3 py-4 text-[32px] font-bold text-[#0369A1] text-right pr-6">
                         {formatCurrency(salary.total_compensation, salary.currency)}
                       </td>
                     </tr>

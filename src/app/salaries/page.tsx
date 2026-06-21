@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import FilterBar from '@/components/features/FilterBar';
-
-const EXCHANGE_RATE_USD_TO_INR = 83; // 1 USD = 83 INR
+import { CURRENCY_CONFIG } from '@/config/currency';
 
 function getLevelColor(level: string) {
   if (['L3', 'SDE_I'].includes(level)) return 'bg-slate-100 text-slate-800 ring-slate-600/20';
@@ -17,8 +16,8 @@ function formatCurrency(amountStr: string, fromCurrency: string, toCurrency: str
   if (amount === 0) return "—";
 
   if (fromCurrency !== toCurrency) {
-    if (fromCurrency === 'USD' && toCurrency === 'INR') amount = amount * EXCHANGE_RATE_USD_TO_INR;
-    if (fromCurrency === 'INR' && toCurrency === 'USD') amount = amount / EXCHANGE_RATE_USD_TO_INR;
+    if (fromCurrency === 'USD' && toCurrency === 'INR') amount = amount * CURRENCY_CONFIG.EXCHANGE_RATE_USD_TO_INR;
+    if (fromCurrency === 'INR' && toCurrency === 'USD') amount = amount / CURRENCY_CONFIG.EXCHANGE_RATE_USD_TO_INR;
     // simplify GBP/EUR logic for this trial
   }
 
@@ -72,8 +71,8 @@ export default async function SalariesPage({
       />
       <div className="sm:flex sm:items-center sm:justify-between mb-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-[#222222] tracking-tight">Software Engineer Salaries in India</h1>
-          <p className="mt-2 text-sm text-[#717171]">
+          <h1 className="text-4xl font-bold text-deep-text leading-[1.1]">Software Engineer Salaries in India</h1>
+          <p className="mt-2 text-base text-muted-text">
             Showing {(meta?.page - 1) * meta?.limit + 1} to {Math.min(meta?.page * meta?.limit, meta?.total)} of {meta?.total?.toLocaleString() || 0} records
           </p>
         </div>
@@ -96,8 +95,8 @@ export default async function SalariesPage({
                     <th className="px-3 py-3.5 text-right text-sm font-semibold text-[#222222]">Base</th>
                     <th className="px-3 py-3.5 text-right text-sm font-semibold text-[#222222]">Stock</th>
                     <th className="px-3 py-3.5 text-right text-sm font-semibold text-[#222222] pr-6 hover:bg-[#F2F2F2] cursor-pointer">
-                      <Link href={`?${new URLSearchParams({...params as any, sort: params.sort === 'highest_tc' ? 'recent' : 'highest_tc'}).toString()}`}>
-                        Total Comp {params.sort === 'highest_tc' ? '↓' : '↕'}
+                      <Link href={`?${new URLSearchParams({...params as any, sort: params.sort === 'total_comp_desc' ? 'total_comp_asc' : 'total_comp_desc'}).toString()}`}>
+                        Total Comp {params.sort === 'total_comp_desc' ? '↓' : params.sort === 'total_comp_asc' ? '↑' : '↕'}
                       </Link>
                     </th>
                   </tr>
@@ -128,7 +127,7 @@ export default async function SalariesPage({
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-[#484848] text-right">
                         {formatCurrency(salary.stock, salary.currency, displayCurrency)}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-lg font-bold text-[#0369A1] text-right pr-6">
+                      <td className="whitespace-nowrap px-3 py-4 text-[32px] font-bold text-[#0369A1] text-right pr-6">
                         {formatCurrency(salary.total_compensation, salary.currency, displayCurrency)}
                       </td>
                     </tr>

@@ -185,10 +185,10 @@ export default function ComparePage() {
                 <td className="py-4 pr-6 text-right text-sm">{formatDelta(compareData.delta.stock_delta)}</td>
               </tr>
               <tr className="bg-blue-50">
-                <td className="py-5 pl-6 text-sm font-bold text-[#0369A1]">Total Compensation</td>
-                <td className="py-5 px-4 text-lg font-bold text-[#0369A1]">{compareData.record_1.currency} {formatCurrency(compareData.record_1.total_compensation)}</td>
-                <td className="py-5 px-4 text-lg font-bold text-[#0369A1]">{compareData.record_2.currency} {formatCurrency(compareData.record_2.total_compensation)}</td>
-                <td className="py-5 pr-6 text-right text-lg font-bold">{formatDelta(compareData.delta.tc_delta)}</td>
+                <td className="py-5 pl-6 text-base font-bold text-[#0369A1]">Total Compensation</td>
+                <td className="py-5 px-4 text-[32px] font-bold text-[#0369A1]">{compareData.record_1.currency} {formatCurrency(compareData.record_1.total_compensation)}</td>
+                <td className="py-5 px-4 text-[32px] font-bold text-[#0369A1]">{compareData.record_2.currency} {formatCurrency(compareData.record_2.total_compensation)}</td>
+                <td className="py-5 pr-6 text-right text-[32px] font-bold">{formatDelta(compareData.delta.tc_delta)}</td>
               </tr>
             </tbody>
           </table>
