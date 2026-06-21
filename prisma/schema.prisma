@@ -12,27 +12,30 @@ datasource db {
 // ==========================================
 
 enum Level {
-  ENTRY
-  MID
-  SENIOR
+  L3
+  L4
+  L5
+  L6
+  SDE_I
+  SDE_II
+  SDE_III
   STAFF
   PRINCIPAL
-  EXECUTIVE
+  IC4
+  IC5
 }
 
 enum Currency {
-  USD
-  EUR
-  GBP
   INR
-  CAD
-  AUD
+  USD
+  GBP
+  EUR
 }
 
 enum Source {
-  VERIFIED
-  UNVERIFIED
-  EXTERNAL
+  CONTRIBUTOR
+  SCRAPED
+  AI_INFERRED
 }
 
 enum ReviewRating {
@@ -54,34 +57,34 @@ enum InterviewResult {
 // ==========================================
 
 model User {
-  id            String             @id @default(cuid())
-  email         String             @unique
-  password_hash String?            
-  created_at    DateTime           @default(now())
-  updated_at    DateTime           @updatedAt
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password_hash String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 
-  salaries      SalarySubmission[]
-  reviews       Review[]
-  interviews    Interview[]
+  salaries   SalarySubmission[]
+  reviews    Review[]
+  interviews Interview[]
 }
 
 model Company {
-  id              String             @id @default(cuid())
+  id              String  @id @default(cuid())
   name            String
-  slug            String             @unique // SEO route: /companies/google
-  normalized_name String             @unique // Strict deduplication key
+  slug            String  @unique // SEO route: /companies/google
+  normalized_name String  @unique // Strict deduplication key
   industry        String?
   headquarters    String?
   founded_year    Int?
   headcount_range String?
   logo_url        String?
-  
-  salaries        SalarySubmission[]
-  reviews         Review[]
-  interviews      Interview[]
-  
-  created_at      DateTime           @default(now())
-  updated_at      DateTime           @updatedAt
+
+  salaries   SalarySubmission[]
+  reviews    Review[]
+  interviews Interview[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   // Indexing for category filtering and exact match deduplication
   @@index([industry])
@@ -89,81 +92,81 @@ model Company {
 }
 
 model Role {
-  id              String             @id @default(cuid())
-  name            String             
-  slug            String             @unique // SEO route: /salaries/software-engineer
-  category        String             
-  
-  salaries        SalarySubmission[]
-  interviews      Interview[]
+  id       String @id @default(cuid())
+  name     String
+  slug     String @unique // SEO route: /salaries/software-engineer
+  category String
 
-  created_at      DateTime           @default(now())
-  updated_at      DateTime           @updatedAt
-  
+  salaries   SalarySubmission[]
+  interviews Interview[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
   // Grouping similar roles globally
   @@index([category])
 }
 
 model SalarySubmission {
-  id                 String    @id @default(cuid())
-  company_id         String
-  role_id            String
-  user_id            String?   // Nullable ensures preservation if user deletes account
-  
-  level              Level
-  location           String
-  currency           Currency  @default(USD)
-  
-  experience_years   Float
-  company_tenure     Float?    
-  
-  base_salary        Int
-  bonus              Int       @default(0)
-  stock              Int       @default(0) 
-  signing_bonus      Int       @default(0)
-  total_compensation Int       // Denormalized for ultra-fast aggregation
-  
-  source             Source    @default(UNVERIFIED)
-  confidence_score   Float     @default(0)
-  is_verified        Boolean   @default(false)
-  
-  company            Company   @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  role               Role      @relation(fields: [role_id], references: [id], onDelete: Cascade)
-  user               User?     @relation(fields: [user_id], references: [id], onDelete: SetNull)
-  
-  submitted_at       DateTime  @default(now())
+  id         String  @id @default(cuid())
+  company_id String
+  role_id    String
+  user_id    String? // Nullable ensures preservation if user deletes account
+
+  level    Level
+  location String
+  currency Currency @default(USD)
+
+  experience_years Float
+  company_tenure   Float?
+
+  base_salary        BigInt
+  bonus              BigInt @default(0)
+  stock              BigInt @default(0)
+  signing_bonus      BigInt @default(0)
+  total_compensation BigInt // Denormalized for ultra-fast aggregation
+
+  source           Source  @default(CONTRIBUTOR)
+  confidence_score Decimal @default(0.0) @db.Decimal(3, 2)
+  is_verified      Boolean @default(false)
+
+  company Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  role    Role    @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  submitted_at DateTime @default(now())
 
   // Core Analytics Indexes
-  // 1. Role lookup within a specific company (e.g., Meta Software Engineers)
-  @@index([company_id, role_id, level])
+  // 1. Core query index for filtering
+  @@index([company_id, level, location])
   // 2. Global role percentiles & comparisons (Pre-sorted for fast limit/offset)
-  @@index([role_id, total_compensation(sort: Desc)]) 
+  @@index([total_compensation(sort: Desc)])
   // 3. Company-wide compensation metrics
-  @@index([company_id, total_compensation(sort: Desc)]) 
+  @@index([company_id, total_compensation(sort: Desc)])
   // 4. Geographic filtering
-  @@index([location, role_id])                   
+  @@index([location, role_id])
   // 5. Time-series data / Recent submissions
   @@index([submitted_at(sort: Desc)])
 }
 
 model Review {
-  id                String       @id @default(cuid())
-  company_id        String
-  user_id           String?
-  
-  rating            ReviewRating
-  title             String
-  pros              String       @db.Text
-  cons              String       @db.Text
-  advice_to_mgmt    String?      @db.Text
-  
+  id         String  @id @default(cuid())
+  company_id String
+  user_id    String?
+
+  rating         ReviewRating
+  title          String
+  pros           String       @db.Text
+  cons           String       @db.Text
+  advice_to_mgmt String?      @db.Text
+
   is_current_emp    Boolean
-  employment_status String?     
-  
-  company           Company      @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  user              User?        @relation(fields: [user_id], references: [id], onDelete: SetNull)
-  
-  created_at        DateTime     @default(now())
+  employment_status String?
+
+  company Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  created_at DateTime @default(now())
 
   // Fast retrieval of recent company reviews
   @@index([company_id, created_at(sort: Desc)])
@@ -171,24 +174,24 @@ model Review {
 }
 
 model Interview {
-  id               String           @id @default(cuid())
-  company_id       String
-  role_id          String
-  user_id          String?
-  
-  difficulty       Int              // 1-5 Scale
-  process_length   Int?             // Days
-  result           InterviewResult
-  experience_desc  String           @db.Text
-  questions        String?          @db.Text
-  
-  offer_amount     Int?             
-  
-  company          Company          @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  role             Role             @relation(fields: [role_id], references: [id], onDelete: Cascade)
-  user             User?            @relation(fields: [user_id], references: [id], onDelete: SetNull)
-  
-  created_at       DateTime         @default(now())
+  id         String  @id @default(cuid())
+  company_id String
+  role_id    String
+  user_id    String?
+
+  difficulty      Int // 1-5 Scale
+  process_length  Int? // Days
+  result          InterviewResult
+  experience_desc String          @db.Text
+  questions       String?         @db.Text
+
+  offer_amount Int?
+
+  company Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  role    Role    @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  created_at DateTime @default(now())
 
   @@index([company_id, role_id])
   @@index([created_at(sort: Desc)])

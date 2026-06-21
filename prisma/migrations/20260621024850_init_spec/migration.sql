@@ -1,11 +1,11 @@
 -- CreateEnum
-CREATE TYPE "Level" AS ENUM ('ENTRY', 'MID', 'SENIOR', 'STAFF', 'PRINCIPAL', 'EXECUTIVE');
+CREATE TYPE "Level" AS ENUM ('L3', 'L4', 'L5', 'L6', 'SDE_I', 'SDE_II', 'SDE_III', 'STAFF', 'PRINCIPAL', 'IC4', 'IC5');
 
 -- CreateEnum
-CREATE TYPE "Currency" AS ENUM ('USD', 'EUR', 'GBP', 'INR', 'CAD', 'AUD');
+CREATE TYPE "Currency" AS ENUM ('INR', 'USD', 'GBP', 'EUR');
 
 -- CreateEnum
-CREATE TYPE "Source" AS ENUM ('VERIFIED', 'UNVERIFIED', 'EXTERNAL');
+CREATE TYPE "Source" AS ENUM ('CONTRIBUTOR', 'SCRAPED', 'AI_INFERRED');
 
 -- CreateEnum
 CREATE TYPE "ReviewRating" AS ENUM ('TERRIBLE', 'POOR', 'AVERAGE', 'GOOD', 'EXCELLENT');
@@ -64,13 +64,13 @@ CREATE TABLE "SalarySubmission" (
     "currency" "Currency" NOT NULL DEFAULT 'USD',
     "experience_years" DOUBLE PRECISION NOT NULL,
     "company_tenure" DOUBLE PRECISION,
-    "base_salary" INTEGER NOT NULL,
-    "bonus" INTEGER NOT NULL DEFAULT 0,
-    "stock" INTEGER NOT NULL DEFAULT 0,
-    "signing_bonus" INTEGER NOT NULL DEFAULT 0,
-    "total_compensation" INTEGER NOT NULL,
-    "source" "Source" NOT NULL DEFAULT 'UNVERIFIED',
-    "confidence_score" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "base_salary" BIGINT NOT NULL,
+    "bonus" BIGINT NOT NULL DEFAULT 0,
+    "stock" BIGINT NOT NULL DEFAULT 0,
+    "signing_bonus" BIGINT NOT NULL DEFAULT 0,
+    "total_compensation" BIGINT NOT NULL,
+    "source" "Source" NOT NULL DEFAULT 'CONTRIBUTOR',
+    "confidence_score" DECIMAL(3,2) NOT NULL DEFAULT 0.0,
     "is_verified" BOOLEAN NOT NULL DEFAULT false,
     "submitted_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -133,10 +133,10 @@ CREATE UNIQUE INDEX "Role_slug_key" ON "Role"("slug");
 CREATE INDEX "Role_category_idx" ON "Role"("category");
 
 -- CreateIndex
-CREATE INDEX "SalarySubmission_company_id_role_id_level_idx" ON "SalarySubmission"("company_id", "role_id", "level");
+CREATE INDEX "SalarySubmission_company_id_level_location_idx" ON "SalarySubmission"("company_id", "level", "location");
 
 -- CreateIndex
-CREATE INDEX "SalarySubmission_role_id_total_compensation_idx" ON "SalarySubmission"("role_id", "total_compensation" DESC);
+CREATE INDEX "SalarySubmission_total_compensation_idx" ON "SalarySubmission"("total_compensation" DESC);
 
 -- CreateIndex
 CREATE INDEX "SalarySubmission_company_id_total_compensation_idx" ON "SalarySubmission"("company_id", "total_compensation" DESC);

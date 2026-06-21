@@ -1,6 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { Prisma, Level, Source } from '@prisma/client';
+import { Prisma, Level, Currency, Source } from '@prisma/client';
+import { z } from 'zod';
+
+const salarySubmissionSchema = z.object({
+  company_id: z.string().min(1, "Company ID is required"),
+  role_id: z.string().min(1, "Role ID is required"),
+  level: z.nativeEnum(Level, { errorMap: () => ({ message: "Invalid level" }) }),
+  location: z.string().min(1, "Location is required"),
+  currency: z.nativeEnum(Currency).optional().default(Currency.USD),
+  experience_years: z.number().min(0, "Experience years cannot be negative"),
+  company_tenure: z.number().min(0).optional().nullable(),
+  base_salary: z.number().int().min(0, "Base salary must be a non-negative integer"),
+  bonus: z.number().int().min(0).optional().default(0),
+  stock: z.number().int().min(0).optional().default(0),
+  signing_bonus: z.number().int().min(0).optional().default(0),
+});
 
 export async function GET(request: NextRequest) {
   try {
@@ -70,29 +85,27 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    
-    const {
-      company_id,
-      role_id,
-      level,
-      location,
-      currency,
-      experience_years,
-      company_tenure,
-      base_salary,
-      bonus,
-      stock,
-      signing_bonus
-    } = body;
-
-    // Strict validation
-    if (!company_id || !role_id || !level || !location || base_salary === undefined) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
     }
 
+    
+    // Zod validation
+    const parsed = salarySubmissionSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid payload', details: parsed.error.format() },
+        { status: 400 }
+      );
+    }
+
+    const data = parsed.data;
+
     // Compute server-side
-    const total_compensation = base_salary + (bonus || 0) + (stock || 0) + (signing_bonus || 0);
+    const total_compensation = data.base_salary + data.bonus + data.stock + data.signing_bonus;
 
     // Flag anomalies
     const isExtreme = total_compensation > 2000000 || total_compensation < 10000;
@@ -100,17 +113,17 @@ export async function POST(request: NextRequest) {
 
     const submission = await prisma.salarySubmission.create({
       data: {
-        company_id,
-        role_id,
-        level,
-        location,
-        currency: currency || 'USD',
-        experience_years: parseFloat(experience_years) || 0,
-        company_tenure: company_tenure ? parseFloat(company_tenure) : null,
-        base_salary: parseInt(base_salary),
-        bonus: parseInt(bonus || 0),
-        stock: parseInt(stock || 0),
-        signing_bonus: parseInt(signing_bonus || 0),
+        company_id: data.company_id,
+        role_id: data.role_id,
+        level: data.level,
+        location: data.location,
+        currency: data.currency,
+        experience_years: data.experience_years,
+        company_tenure: data.company_tenure,
+        base_salary: data.base_salary,
+        bonus: data.bonus,
+        stock: data.stock,
+        signing_bonus: data.signing_bonus,
         total_compensation,
         confidence_score,
         source: Source.UNVERIFIED,
@@ -120,6 +133,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: submission }, { status: 201 });
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+      return NextResponse.json(
+        { error: 'Invalid company_id or role_id' },
+        { status: 400 }
+      );
+    }
+
     console.error('Error creating salary submission:', error);
     return NextResponse.json({ error: 'Failed to submit salary' }, { status: 500 });
   }
