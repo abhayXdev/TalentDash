@@ -30,13 +30,48 @@ function formatCurrency(amountStr: string, currency: string) {
 }
 
 async function getCompanyData(slug: string) {
-  const host = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  const res = await fetch(`${host}/api/companies/${slug}`, {
-    next: { revalidate: 86400 },
+  const company = await prisma.company.findUnique({
+    where: { slug }
   });
-  if (!res.ok) return null;
-  const json = await res.json();
-  return json.data;
+
+  if (!company) return null;
+
+  const rawSalaries = await prisma.salary.findMany({
+    where: { company_id: company.id },
+    orderBy: { total_compensation: 'desc' }
+  });
+
+  let median_total_compensation = "0";
+  if (rawSalaries.length > 0) {
+    const mid = Math.floor(rawSalaries.length / 2);
+    if (rawSalaries.length % 2 === 0) {
+      const sum = rawSalaries[mid - 1].total_compensation + rawSalaries[mid].total_compensation;
+      median_total_compensation = (sum / 2n).toString();
+    } else {
+      median_total_compensation = rawSalaries[mid].total_compensation.toString();
+    }
+  }
+
+  const level_distribution: Record<string, number> = {};
+  rawSalaries.forEach(s => {
+    level_distribution[s.level] = (level_distribution[s.level] || 0) + 1;
+  });
+
+  const salaries = rawSalaries.map(salary => ({
+    ...salary,
+    base_salary: salary.base_salary.toString(),
+    bonus: salary.bonus.toString(),
+    stock: salary.stock.toString(),
+    total_compensation: salary.total_compensation.toString(),
+    confidence_score: salary.confidence_score.toNumber(),
+  }));
+
+  return {
+    company,
+    median_total_compensation,
+    level_distribution,
+    salaries
+  };
 }
 
 export async function generateStaticParams() {
@@ -196,7 +231,7 @@ export default async function CompanyPage({
             </tr>
           </thead>
           <tbody className="divide-y divide-[#EBEBEB] bg-white">
-            {salaries.map((salary: {id: string, role: string, level: string, location: string, experience_years: string, base_salary: string, currency: string, stock: string, total_compensation: string}) => (
+            {salaries.map((salary: {id: string, role: string, level: string, location: string, experience_years: number, base_salary: string, currency: string, stock: string, total_compensation: string}) => (
               <tr key={salary.id} className="hover:bg-[#F2F2F2] transition-colors">
                 <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-[#222222] sm:pl-6">
                   {salary.role}
