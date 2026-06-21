@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import FilterBar from '@/components/features/FilterBar';
 import { CURRENCY_CONFIG } from '@/config/currency';
 import Badge from '@/components/ui/Badge';
@@ -168,14 +169,30 @@ export default async function SalariesPage({
       />
       <div className="sm:flex sm:items-center sm:justify-between mb-4">
         <div>
-          <h1 className="text-4xl font-bold text-deep-text leading-[1.1]">Software Engineer Salaries in India</h1>
+          <h1 className="text-4xl font-bold text-deep-text leading-[1.1]">
+            {typeof params.role === 'string' && params.role
+              ? typeof params.company === 'string' && params.company
+                ? `${params.role} Salaries at ${params.company}`
+                : typeof params.location === 'string' && params.location
+                ? `${params.role} Salaries in ${params.location}`
+                : `${params.role} Salaries in India`
+              : typeof params.company === 'string' && params.company
+              ? `${params.company} Salaries`
+              : 'Tech Salaries in India'}
+          </h1>
           <p className="mt-2 text-base text-muted-text">
-            Showing {(meta?.page - 1) * meta?.limit + 1} to {Math.min(meta?.page * meta?.limit, meta?.total)} of {meta?.total?.toLocaleString() || 0} records
+            {meta?.total > 0
+              ? `Showing ${(meta.page - 1) * meta.limit + 1} to ${Math.min(meta.page * meta.limit, meta.total)} of ${meta.total.toLocaleString()} records`
+              : 'No records found'}
           </p>
         </div>
       </div>
 
-      <FilterBar />
+      <Suspense fallback={
+        <div className="bg-white p-4 rounded-lg shadow border border-gray-200 mb-6 h-32 animate-pulse" />
+      }>
+        <FilterBar />
+      </Suspense>
 
       <div className="mt-4 flex flex-col">
         <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
