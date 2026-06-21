@@ -73,12 +73,28 @@ npm run dev
 
 Navigate to [http://localhost:3000](http://localhost:3000) to view the application.
 
-## 🏗️ Architecture & Engineering Decisions
+## 🏗️ Architecture Decisions
 
-1. **Next.js App Router**: Chosen for its superior Static Site Generation (SSG) capabilities, enabling fast, SEO-friendly static asset generation.
-2. **Custom Tailwind CSS**: Built completely from scratch without external component libraries to enforce strict performance budgets and reduce bundle size.
-3. **Database Architecture**: PostgreSQL hosted on Neon provides serverless scalability, interfaced via Prisma to guarantee type-safe database queries and migrations.
-4. **Rendering Strategy**:
-   - `generateStaticParams` handles Company pages, utilizing aggressive caching with ISR fallback for dynamic edge cases.
-   - Real-time API route fetching handles complex search queries and comparisons, ensuring instant data retrieval.
-5. **Data Integrity**: The `total_compensation` metric is strictly calculated programmatically upon data ingestion, maintaining a highly reliable source-of-truth.
+### 1. Rendering Strategy (Static vs ISR vs Dynamic)
+- **Company Pages (`/companies/[slug]`)**: Use **Static Generation with ISR** (`generateStaticParams`). Company profiles are read-heavy, highly cacheable, and crucial for SEO. We query the database at build time to statically generate these pages. ISR ensures that if new companies are added or existing records are updated, the page revalidates in the background without requiring a full rebuild.
+- **Salaries Page (`/salaries`)**: Uses **ISR** (Incremental Static Regeneration) with a 5-minute revalidation window. Since it relies heavily on query parameters (filters) and is the most frequently accessed page for live data, making it fully dynamic would hammer the database. ISR provides a healthy balance—serving fast cached responses while updating shortly after a new salary is submitted.
+- **Home Page (`/`)**: Uses **ISR**. The homepage aggregates top companies and recent insights, which don't need real-time freshness but should stay up-to-date daily or hourly.
+- **Compare Page (`/compare`)**: **Dynamic**. It handles complex, arbitrary query parameters (e.g., comparing any two companies/roles) that are impossible to pre-compute statically.
+
+### 2. Caching TTLs
+- **`GET /api/salaries`** (`s-maxage=300, stale-while-revalidate=3600`): Salary data changes frequently as users submit new records. A 5-minute CDN cache (`s-maxage=300`) protects the database from traffic spikes (e.g., a viral post), while `stale-while-revalidate` ensures users get an instant response while the CDN fetches fresh data in the background.
+- **`GET /api/companies/:slug`** (`s-maxage=3600, stale-while-revalidate=86400`): Company aggregates change much slower than individual salary records. A 1-hour cache is safe and ensures maximum edge performance, with a full 24-hour window to serve stale data if the origin experiences downtime.
+
+### 3. Pagination Strategy (Page-Based)
+We implemented **Page-Based** (Offset) Pagination rather than Cursor-Based. 
+- **Why**: Salary data is frequently filtered by multiple dimensions (role, level, location, company) and users often want to jump to a specific page or see the total number of pages. Offset pagination works seamlessly with complex `WHERE` and `ORDER BY` clauses across varied columns (e.g., sorting by total compensation). Cursor-based pagination is more performant for infinite-scroll feeds sorted sequentially by ID or timestamp, but it becomes overly complex and brittle when dealing with highly dynamic, multi-column sorting and filtering.
+
+### 4. What We Would Build Differently With Another Day
+- **Authentication & Verified Profiles**: Add NextAuth to allow users to create accounts, verify their employment via work email, and earn a "Verified" badge on their salary submissions.
+- **Advanced Data Visualizations**: Integrate a charting library (like Recharts) to plot salary bands over time or display scatter plots of base salary vs. equity for different levels.
+- **Redis Caching for Expensive Aggregates**: While CDN caching handles API routes, we would use Upstash Redis to cache expensive database aggregates (e.g., median comp calculation) directly within the Server Components.
+
+### 5. What We Did NOT Build and Why
+- **Cursor-Based Pagination**: Skipped due to its incompatibility with arbitrary multi-column sorting without significant architectural overhead.
+- **Real-Time WebSockets**: There is no business need for users to see a salary pop up the millisecond it's submitted. ISR provides "near real-time" freshness without the immense infrastructure cost of WebSockets.
+- **Complex Full-Text Search Engine**: Skipped Elasticsearch or Algolia in favor of Postgres' built-in `contains` and `mode: 'insensitive'` filtering. Under current scale requirements, Postgres handles these queries perfectly, avoiding the complexity of syncing data to a secondary search index.
