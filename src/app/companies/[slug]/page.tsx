@@ -150,7 +150,7 @@ export default async function CompanyPage({
       <div className="bg-white p-6 rounded-lg shadow-sm border border-[#EBEBEB] mb-8">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-[#222222] capitalize leading-[1.1]">
+            <h1 className="text-4xl font-bold text-[#222222] leading-[1.1]">
               {company.name}
             </h1>
             <div className="mt-2 flex items-center flex-wrap gap-3 text-sm text-[#717171]">

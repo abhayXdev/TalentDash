@@ -3,6 +3,8 @@ import FilterBar from '@/components/features/FilterBar';
 import { CURRENCY_CONFIG } from '@/config/currency';
 import Badge from '@/components/ui/Badge';
 
+export const revalidate = 300;
+
 function formatCurrency(amountStr: string, fromCurrency: string, toCurrency: string) {
   let amount = Number(amountStr);
   if (amount === 0) return "—";
@@ -19,16 +21,43 @@ function formatCurrency(amountStr: string, fromCurrency: string, toCurrency: str
   return symbol + amount.toLocaleString(locale, { maximumFractionDigits: 0 });
 }
 
-export const metadata = {
-  title: 'Software Engineer Salaries in India — L3 to L5 | TalentDash',
-  description: 'Compare software engineer salaries across top tech companies in India. Filter by role, level, location, and total comp.',
-  alternates: { canonical: 'https://talentdash.com/salaries' },
-  openGraph: {
-    title: 'Software Engineer Salaries in India — L3 to L5 | TalentDash',
-    description: 'Compare software engineer salaries across top tech companies in India.',
-    url: 'https://talentdash.com/salaries',
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  const role = typeof params.role === 'string' ? params.role : null;
+  const company = typeof params.company === 'string' ? params.company : null;
+  const location = typeof params.location === 'string' ? params.location : null;
+
+  let title = 'Tech Salaries in India | TalentDash';
+  let description = 'Compare verified salary data across top tech companies in India. Filter by role, level, location and more.';
+
+  if (role && company && location) {
+    title = `${role} Salaries at ${company} in ${location} | TalentDash`;
+    description = `See verified ${role} compensation at ${company} in ${location}. Base salary, bonus, stock and total comp.`;
+  } else if (role && company) {
+    title = `${role} Salaries at ${company} | TalentDash`;
+    description = `Verified ${role} salary data at ${company}. Compare levels, locations and total compensation.`;
+  } else if (role && location) {
+    title = `${role} Salaries in ${location} | TalentDash`;
+    description = `Compare ${role} compensation in ${location} across top tech companies.`;
+  } else if (role) {
+    title = `${role} Salaries in India | TalentDash`;
+    description = `Verified ${role} salary data across top Indian tech companies. Compare by level and location.`;
+  } else if (company) {
+    title = `${company} Salaries | TalentDash`;
+    description = `See all verified salary records at ${company}. Compare roles, levels and total compensation.`;
   }
-};
+
+  return {
+    title,
+    description,
+    alternates: { canonical: 'https://talentdash.com/salaries' },
+    openGraph: { title, description, url: 'https://talentdash.com/salaries' },
+  };
+}
 
 import { prisma } from '@/lib/prisma';
 import { Prisma, Level, Currency } from '@prisma/client';
@@ -36,7 +65,11 @@ import { Prisma, Level, Currency } from '@prisma/client';
 async function getSalariesData(params: Record<string, string | string[] | undefined>) {
   const roleString = typeof params.role === 'string' ? params.role : undefined;
   const companyString = typeof params.company === 'string' ? params.company : undefined;
-  const levelString = typeof params.level === 'string' ? params.level : undefined;
+  const levelParams = Array.isArray(params.level)
+    ? params.level
+    : params.level
+    ? [params.level]
+    : [];
   const locationString = typeof params.location === 'string' ? params.location : undefined;
   const currencyString = typeof params.currency === 'string' ? params.currency : undefined;
   
@@ -58,8 +91,11 @@ async function getSalariesData(params: Record<string, string | string[] | undefi
   if (companyString) {
     where.company = { normalized_name: { contains: companyString, mode: 'insensitive' } };
   }
-  if (levelString && Object.keys(Level).includes(levelString)) {
-    where.level = levelString as Level;
+  const validLevels = levelParams.filter(l => Object.keys(Level).includes(l)) as Level[];
+  if (validLevels.length === 1) {
+    where.level = validLevels[0];
+  } else if (validLevels.length > 1) {
+    where.level = { in: validLevels };
   }
   if (locationString) {
     where.location = { contains: locationString, mode: 'insensitive' };
@@ -154,6 +190,7 @@ export default async function SalariesPage({
                     <th className="px-3 py-3.5 text-left text-sm font-semibold text-[#222222]">Location</th>
                     <th className="px-3 py-3.5 text-right text-sm font-semibold text-[#222222]">Exp. (Yrs)</th>
                     <th className="px-3 py-3.5 text-right text-sm font-semibold text-[#222222]">Base</th>
+                    <th className="px-3 py-3.5 text-right text-sm font-semibold text-[#222222]">Bonus</th>
                     <th className="px-3 py-3.5 text-right text-sm font-semibold text-[#222222]">Stock</th>
                     <th className="px-3 py-3.5 text-right text-sm font-semibold text-[#222222] pr-6 hover:bg-[#F2F2F2] cursor-pointer">
                       <Link href={`?${new URLSearchParams({...params as Record<string, string>, sort: params.sort === 'total_comp_desc' ? 'total_comp_asc' : 'total_comp_desc'}).toString()}`}>
@@ -163,38 +200,45 @@ export default async function SalariesPage({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#EBEBEB] bg-[#FFFFFF]">
-                  {salaries && salaries.map((salary: {id: string, company: {name: string}, role: string, level: string, location: string, experience_years: number, base_salary: string, currency: string, stock: string, total_compensation: string}) => (
-                    <tr key={salary.id} className="hover:bg-[#F2F2F2] transition-colors">
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-[#222222] sm:pl-6">
-                        {salary.company.name}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-[#484848]">
-                        {salary.role}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm">
-                        <Badge level={salary.level} />
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-[#717171]">
-                        {salary.location}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-[#484848] text-right">
-                        {salary.experience_years}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-[#484848] text-right">
-                        {formatCurrency(salary.base_salary, salary.currency, displayCurrency)}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-[#484848] text-right">
-                        {formatCurrency(salary.stock, salary.currency, displayCurrency)}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-[32px] font-bold text-[#0369A1] text-right pr-6">
-                        {formatCurrency(salary.total_compensation, salary.currency, displayCurrency)}
-                      </td>
-                    </tr>
-                  ))}
-                  {!salaries || salaries.length === 0 && (
+                  {salaries.length > 0 ? (
+                    salaries.map((salary: {id: string, company: {name: string}, role: string, level: string, location: string, experience_years: number, base_salary: string, bonus: string, currency: string, stock: string, total_compensation: string}) => (
+                      <tr key={salary.id} className="hover:bg-[#F2F2F2] transition-colors">
+                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-[#222222] sm:pl-6">
+                          {salary.company.name}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-[#484848]">
+                          {salary.role}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-4 text-sm">
+                          <Badge level={salary.level} />
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-[#717171]">
+                          {salary.location}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-[#484848] text-right">
+                          {salary.experience_years}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-[#484848] text-right">
+                          {formatCurrency(salary.base_salary, salary.currency, displayCurrency)}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-[#484848] text-right">
+                          {formatCurrency(salary.bonus, salary.currency, displayCurrency)}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-[#484848] text-right">
+                          {formatCurrency(salary.stock, salary.currency, displayCurrency)}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-4 text-[32px] font-bold text-[#0369A1] text-right pr-6">
+                          {formatCurrency(salary.total_compensation, salary.currency, displayCurrency)}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
                     <tr>
-                      <td colSpan={8} className="py-10 text-center text-sm text-[#717171]">
-                        No records found for these filters. <Link href="/salaries" className="text-[#0369A1] underline">Try removing a filter.</Link>
+                      <td colSpan={9} className="py-10 text-center text-sm text-[#717171]">
+                        No records found for these filters.{' '}
+                        <Link href="/salaries" className="text-[#0369A1] underline">
+                          Try removing a filter.
+                        </Link>
                       </td>
                     </tr>
                   )}

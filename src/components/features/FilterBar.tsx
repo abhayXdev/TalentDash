@@ -15,7 +15,6 @@ export default function FilterBar() {
   const [level, setLevel] = useState<string[]>(searchParams.getAll('level') || []);
   const [currency, setCurrency] = useState(searchParams.get('currency') || 'USD');
 
-  const initialMount = useRef(true);
   const prevFilters = useRef({ company, role, location, level: level.join(','), currency });
 
   const updateFilters = useCallback(() => {

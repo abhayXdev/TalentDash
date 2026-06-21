@@ -28,6 +28,12 @@ TalentDash is an advanced career intelligence platform designed to democratize c
 
 Follow these instructions to set up the project locally.
 
+## Environment Variables
+Copy `.env.example` to `.env` and fill in your values:
+- `DATABASE_URL` — Neon PostgreSQL connection string (found in your Neon dashboard)
+- `UPSTASH_REDIS_REST_URL` — Upstash Redis REST URL (optional, rate limiting only)
+- `UPSTASH_REDIS_REST_TOKEN` — Upstash Redis token (optional, rate limiting only)
+
 ### 1. Clone & Install Dependencies
 
 ```bash

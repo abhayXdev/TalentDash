@@ -23,7 +23,7 @@ const ratelimit = redis
 
 export async function middleware(request: NextRequest) {
   // Only apply to POST /api/salaries
-  if (request.nextUrl.pathname === '/api/salaries' && request.method === 'POST') {
+  if (request.nextUrl.pathname === '/api/ingest-salary' && request.method === 'POST') {
     // Fail-open policy if Redis is not configured
     if (!ratelimit) {
       console.warn('Rate limiter bypassed: UPSTASH variables not configured.');
@@ -54,5 +54,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/api/salaries',
+  matcher: '/api/ingest-salary',
 };

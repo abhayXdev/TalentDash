@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { Prisma, Level, Currency, Source } from '@prisma/client';
 import { z } from 'zod';
@@ -14,6 +15,7 @@ const ingestSchema = z.object({
   bonus: z.number().int().min(0).optional().default(0),
   stock: z.number().int().min(0).optional().default(0),
   confidence_score: z.number().min(0.0).max(1.0, "Confidence score must be between 0.0 and 1.0"),
+  source: z.nativeEnum(Source, { message: "Source must be CONTRIBUTOR, SCRAPED, or AI_INFERRED" }).optional().default(Source.SCRAPED),
 });
 
 function normalizeCompany(name: string): { slug: string, normalized: string } {
@@ -110,7 +112,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (finalConfidenceScore < 0.5) {
+    if (data.source === Source.SCRAPED && finalConfidenceScore < 0.5) {
       finalConfidenceScore = 0.5;
     }
 
@@ -128,10 +130,14 @@ export async function POST(request: NextRequest) {
         stock: BigInt(data.stock),
         total_compensation: BigInt(total_compensation),
         confidence_score: new Prisma.Decimal(finalConfidenceScore),
-        source: Source.SCRAPED, // Setting to SCRAPED for ingest API
+        source: data.source,
         is_verified: false
       }
     });
+
+    revalidatePath('/salaries');
+    revalidatePath(`/companies/${companyRecord.slug}`);
+    revalidatePath('/');
 
     // Serialize BigInt for JSON response
     const serializedSubmission = {

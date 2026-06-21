@@ -79,7 +79,7 @@ export default async function HomePage() {
               href={`/companies/${company.slug}`}
               className="bg-white border border-[#EBEBEB] rounded-lg p-5 hover:shadow-md hover:border-[#FF5A5F] transition-all"
             >
-              <h3 className="text-base font-semibold text-[#222222] capitalize">{company.name}</h3>
+              <h3 className="text-base font-semibold text-[#222222]">{company.name}</h3>
               {company.industry && (
                 <p className="text-sm text-[#717171] mt-1">{company.industry}</p>
               )}

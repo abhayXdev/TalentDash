@@ -8,7 +8,6 @@ export async function GET(request: NextRequest) {
     
     const roleString = searchParams.get('role');
     const companyString = searchParams.get('company');
-    const levelString = searchParams.get('level');
     const locationString = searchParams.get('location');
     const currencyString = searchParams.get('currency');
     
@@ -32,8 +31,12 @@ export async function GET(request: NextRequest) {
     if (companyString) {
       where.company = { normalized_name: { contains: companyString, mode: 'insensitive' } };
     }
-    if (levelString && Object.keys(Level).includes(levelString)) {
-      where.level = levelString as Level;
+    const levelStrings = searchParams.getAll('level');
+    const validLevels = levelStrings.filter(l => Object.keys(Level).includes(l)) as Level[];
+    if (validLevels.length === 1) {
+      where.level = validLevels[0];
+    } else if (validLevels.length > 1) {
+      where.level = { in: validLevels };
     }
     if (locationString) {
       where.location = { contains: locationString, mode: 'insensitive' };
