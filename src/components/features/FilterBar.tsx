@@ -3,7 +3,13 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-const LEVELS = ['L3', 'L4', 'L5', 'L6', 'SDE_I', 'SDE_II', 'SDE_III', 'STAFF', 'PRINCIPAL', 'IC4', 'IC5'];
+const LEVELS = [
+  { id: 'L3', label: 'L3 (Entry)' },
+  { id: 'L4', label: 'L4 (Mid)' },
+  { id: 'L5', label: 'L5 (Senior)' },
+  { id: 'L6', label: 'L6 (Staff)' },
+  { id: 'PRINCIPAL', label: 'Principal+' }
+];
 
 interface FilterBarProps {
   availableRoles?: string[];
@@ -66,24 +72,37 @@ export default function FilterBar({ availableRoles = [], availableLocations = []
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow border border-gray-200 mb-6 space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Company</label>
-          <input
-            type="text"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-            placeholder="Search company..."
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-          />
+    <section className="bg-surface-container-lowest border border-surface-container-highest rounded-xl p-6 shadow-sm mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+        
+        {/* Company Search */}
+        <div className="lg:col-span-2">
+          <label className="block text-xs font-semibold text-on-surface-variant mb-1.5 uppercase tracking-wider">
+            Company
+          </label>
+          <div className="relative">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">
+              search
+            </span>
+            <input
+              type="text"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-surface-container-highest rounded-lg text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors h-[38px]"
+              placeholder="Search by company name..."
+            />
+          </div>
         </div>
+
+        {/* Role Dropdown */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Role</label>
+          <label className="block text-xs font-semibold text-on-surface-variant mb-1.5 uppercase tracking-wider">
+            Role
+          </label>
           <select
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-white"
             value={role}
             onChange={(e) => setRole(e.target.value)}
+            className="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-[38px]"
           >
             <option value="">All Roles</option>
             {availableRoles.map(r => (
@@ -91,12 +110,16 @@ export default function FilterBar({ availableRoles = [], availableLocations = []
             ))}
           </select>
         </div>
+
+        {/* Location Dropdown */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Location</label>
+          <label className="block text-xs font-semibold text-on-surface-variant mb-1.5 uppercase tracking-wider">
+            Location
+          </label>
           <select
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-white"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
+            className="w-full bg-surface-container-lowest border border-surface-container-highest rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-[38px]"
           >
             <option value="">All Locations</option>
             {availableLocations.map(l => (
@@ -104,45 +127,61 @@ export default function FilterBar({ availableRoles = [], availableLocations = []
             ))}
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Currency</label>
-          <div className="mt-1 flex rounded-md shadow-sm">
+
+        {/* Currency Toggle */}
+        <div className="flex items-center justify-end h-[38px]">
+          <div className="inline-flex rounded-lg shadow-sm overflow-hidden border border-surface-container-highest w-full sm:w-auto">
             <button
+              type="button"
               onClick={() => setCurrency('USD')}
-              className={`relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10 w-1/2 justify-center ${currency === 'USD' ? 'bg-blue-600 text-white' : 'bg-white text-gray-900 hover:bg-gray-50'}`}
+              className={`w-1/2 sm:w-auto px-4 py-1.5 text-sm font-semibold transition-colors ${
+                currency === 'USD'
+                  ? 'bg-primary text-white'
+                  : 'bg-surface-container-lowest text-on-surface hover:bg-surface-container-low'
+              }`}
             >
               USD
             </button>
             <button
+              type="button"
               onClick={() => setCurrency('INR')}
-              className={`relative -ml-px inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10 w-1/2 justify-center ${currency === 'INR' ? 'bg-blue-600 text-white' : 'bg-white text-gray-900 hover:bg-gray-50'}`}
+              className={`w-1/2 sm:w-auto px-4 py-1.5 text-sm font-semibold transition-colors border-l border-surface-container-highest ${
+                currency === 'INR'
+                  ? 'bg-primary text-white'
+                  : 'bg-surface-container-lowest text-on-surface hover:bg-surface-container-low'
+              }`}
             >
               INR
             </button>
           </div>
         </div>
       </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Levels</label>
-        <div className="flex flex-wrap gap-2">
-          {LEVELS.map(l => (
-            <label key={l} className="inline-flex items-center space-x-2 bg-gray-50 px-3 py-1 rounded-full border border-gray-200 cursor-pointer hover:bg-gray-100">
-              <input
-                type="checkbox"
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                checked={level.includes(l)}
-                onChange={() => toggleLevel(l)}
-              />
-              <span className="text-sm font-medium text-gray-700">{l}</span>
-            </label>
-          ))}
+
+      {/* Level Checkboxes */}
+      <div className="mt-4 pt-4 border-t border-surface-container-highest flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <span className="block text-xs font-semibold text-on-surface-variant mb-2 uppercase tracking-wider">
+            Level
+          </span>
+          <div className="flex flex-wrap gap-4">
+            {LEVELS.map((lvl) => (
+              <label key={lvl.id} className="inline-flex items-center cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={level.includes(lvl.id)}
+                  onChange={() => toggleLevel(lvl.id)}
+                  className="rounded border-outline text-primary focus:ring-primary h-4 w-4 accent-primary"
+                />
+                <span className="ml-2 text-sm text-on-surface font-medium">{lvl.label}</span>
+              </label>
+            ))}
+          </div>
         </div>
-      </div>
-      <div className="flex justify-end">
-        <button onClick={clearAll} className="text-sm text-gray-500 hover:text-gray-700 font-medium">
-          Clear All Filters
+        
+        <button onClick={clearAll} className="text-sm text-on-surface-variant hover:text-primary font-medium transition-colors">
+          Clear Filters
         </button>
       </div>
-    </div>
+    </section>
   );
 }

@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import FilterBar from '@/components/features/FilterBar';
 import { CURRENCY_CONFIG } from '@/config/currency';
 import Badge from '@/components/ui/Badge';
+import CompanyLogo from '@/components/ui/CompanyLogo';
 
 export const revalidate = 300;
 
@@ -217,63 +218,66 @@ export default async function SalariesPage({
       <div className="mt-4 flex flex-col">
         <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-            <div className="overflow-hidden shadow ring-1 ring-[#EBEBEB] md:rounded-lg border border-[#EBEBEB]">
-              <table className="min-w-full divide-y divide-[#EBEBEB]">
-                <thead className="bg-[#F7F7F7]">
-                  <tr>
-                    <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-[#222222] sm:pl-6">Company</th>
-                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-[#222222]">Role</th>
-                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-[#222222]">Level</th>
-                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-[#222222]">Location</th>
-                    <th className="px-3 py-3.5 text-right text-sm font-semibold text-[#222222]">Exp. (Yrs)</th>
-                    <th className="px-3 py-3.5 text-right text-sm font-semibold text-[#222222]">Base</th>
-                    <th className="px-3 py-3.5 text-right text-sm font-semibold text-[#222222]">Bonus</th>
-                    <th className="px-3 py-3.5 text-right text-sm font-semibold text-[#222222]">Stock</th>
-                    <th className="px-3 py-3.5 text-right text-sm font-semibold text-[#222222] pr-6 hover:bg-[#F2F2F2] cursor-pointer">
+            <div className="bg-surface-container-lowest border border-surface-container-highest rounded-xl shadow-xs overflow-hidden">
+              <table className="w-full border-collapse text-left min-w-[900px]">
+                <thead>
+                  <tr className="bg-surface border-b border-surface-container-highest">
+                    <th className="py-3 px-5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Company</th>
+                    <th className="py-3 px-5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Role</th>
+                    <th className="py-3 px-5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Level</th>
+                    <th className="py-3 px-5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Location</th>
+                    <th className="py-3 px-5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider text-right">Exp. (Yrs)</th>
+                    <th className="py-3 px-5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider text-right">Base</th>
+                    <th className="py-3 px-5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider text-right">Bonus</th>
+                    <th className="py-3 px-5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider text-right">Stock</th>
+                    <th className="py-3 px-5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors">
                       <Link href={`?${new URLSearchParams({...params as Record<string, string>, sort: params.sort === 'total_comp_desc' ? 'total_comp_asc' : 'total_comp_desc'}).toString()}`}>
                         Total Comp {params.sort === 'total_comp_desc' ? '↓' : params.sort === 'total_comp_asc' ? '↑' : '↕'}
                       </Link>
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#EBEBEB] bg-[#FFFFFF]">
+                <tbody className="divide-y divide-surface-container-high bg-surface-container-lowest">
                   {salaries.length > 0 ? (
                     salaries.map((salary: {id: string, company: {name: string}, role: string, level: string, location: string, experience_years: number, base_salary: string, bonus: string, currency: string, stock: string, total_compensation: string}) => (
-                      <tr key={salary.id} className="hover:bg-[#F2F2F2] transition-colors">
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-[#222222] sm:pl-6">
-                          {salary.company.name}
+                      <tr key={salary.id} className="hover:bg-surface-container-low transition-colors">
+                        <td className="py-4 px-5">
+                          <div className="flex items-center gap-3">
+                            <CompanyLogo name={salary.company.name} />
+                            <span className="font-semibold text-on-surface hover:text-primary transition-colors">{salary.company.name}</span>
+                          </div>
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-[#484848]">
+                        <td className="py-4 px-5 text-sm text-on-surface font-medium">
                           {salary.role}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm">
+                        <td className="py-4 px-5">
                           <Badge level={salary.level} />
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-[#717171]">
+                        <td className="py-4 px-5 text-sm text-on-surface-variant">
                           {salary.location}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-[#484848] text-right">
+                        <td className="py-4 px-5 text-sm text-on-surface text-right font-mono">
                           {salary.experience_years}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-[#484848] text-right">
+                        <td className="py-4 px-5 text-sm text-on-surface text-right font-mono">
                           {formatCurrency(salary.base_salary, salary.currency, displayCurrency)}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-[#484848] text-right">
+                        <td className="py-4 px-5 text-sm text-on-surface text-right font-mono">
                           {formatCurrency(salary.bonus, salary.currency, displayCurrency)}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-[#484848] text-right">
+                        <td className="py-4 px-5 text-sm text-on-surface text-right font-mono">
                           {formatCurrency(salary.stock, salary.currency, displayCurrency)}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-[32px] font-bold text-[#0369A1] text-right pr-6">
+                        <td className="py-4 px-5 text-base text-secondary font-bold text-right font-mono">
                           {formatCurrency(salary.total_compensation, salary.currency, displayCurrency)}
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={9} className="py-10 text-center text-sm text-[#717171]">
-                        No records found for these filters.{' '}
-                        <Link href="/salaries" className="text-[#0369A1] underline">
+                      <td colSpan={9} className="py-12 text-center text-on-surface-variant font-medium">
+                        No records found matching your filters.{' '}
+                        <Link href="/salaries" className="text-primary hover:underline">
                           Try removing a filter.
                         </Link>
                       </td>
@@ -283,35 +287,28 @@ export default async function SalariesPage({
               </table>
             </div>
 
-            {/* Pagination Controls */}
             {meta?.totalPages > 1 && (
-              <div className="mt-4 flex items-center justify-between border-t border-[#EBEBEB] bg-[#FFFFFF] px-4 py-3 sm:px-6 rounded-b-lg">
-                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm text-[#717171]">
-                      Page <span className="font-medium text-[#222222]">{meta.page}</span> of <span className="font-medium text-[#222222]">{meta.totalPages}</span>
-                    </p>
-                  </div>
-                  <div>
-                    <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                      {meta.page > 1 && (
-                        <Link
-                          href={`?${new URLSearchParams({...params as Record<string, string>, page: String(meta.page - 1)}).toString()}`}
-                          className="relative inline-flex items-center rounded-l-md px-2 py-2 text-[#717171] ring-1 ring-inset ring-[#EBEBEB] hover:bg-[#F2F2F2]"
-                        >
-                          Previous
-                        </Link>
-                      )}
-                      {meta.page < meta.totalPages && (
-                        <Link
-                          href={`?${new URLSearchParams({...params as Record<string, string>, page: String(meta.page + 1)}).toString()}`}
-                          className={`relative inline-flex items-center ${meta.page === 1 ? 'rounded-l-md' : ''} rounded-r-md px-2 py-2 text-[#717171] ring-1 ring-inset ring-[#EBEBEB] hover:bg-[#F2F2F2]`}
-                        >
-                          Next
-                        </Link>
-                      )}
-                    </nav>
-                  </div>
+              <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-surface-container-high gap-4 bg-surface-container-lowest">
+                <p className="text-xs text-on-surface-variant">
+                  Showing <span className="font-semibold text-on-surface">{(meta.page - 1) * meta.limit + 1}</span> to <span className="font-semibold text-on-surface">{Math.min(meta.page * meta.limit, meta.total)}</span> of <span className="font-semibold text-on-surface">{meta.total}</span> records
+                </p>
+                <div className="flex items-center gap-2">
+                  {meta.page > 1 && (
+                    <Link
+                      href={`?${new URLSearchParams({...params as Record<string, string>, page: String(meta.page - 1)}).toString()}`}
+                      className="px-3.5 py-1.5 border border-surface-container-highest rounded-lg text-xs font-semibold text-on-surface-variant bg-surface-container-lowest hover:bg-surface-container-low transition-colors"
+                    >
+                      Previous
+                    </Link>
+                  )}
+                  {meta.page < meta.totalPages && (
+                    <Link
+                      href={`?${new URLSearchParams({...params as Record<string, string>, page: String(meta.page + 1)}).toString()}`}
+                      className="px-3.5 py-1.5 border border-surface-container-highest rounded-lg text-xs font-semibold text-on-surface-variant bg-surface-container-lowest hover:bg-surface-container-low transition-colors"
+                    >
+                      Next
+                    </Link>
+                  )}
                 </div>
               </div>
             )}
