@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getCompanyOverallMedian } from '@/lib/db-analytics';
 
 export async function GET(
   request: NextRequest,
@@ -10,56 +9,62 @@ export async function GET(
     const { slug } = await params;
     
     const company = await prisma.company.findUnique({
-      where: { slug },
-      include: {
-        _count: {
-          select: { salaries: true, reviews: true, interviews: true }
-        }
-      }
+      where: { slug }
     });
 
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return NextResponse.json({ error: true, message: 'Company not found' }, { status: 404 });
     }
 
-    // Aggregated salary stats (median overall)
-    const overallMedian = await getCompanyOverallMedian(company.id);
-
-    // Role breakdown
-    const roleBreakdown = await prisma.salarySubmission.groupBy({
-      by: ['role_id'],
+    // Fetch all salaries for this company to compute median and level distribution
+    const rawSalaries = await prisma.salarySubmission.findMany({
       where: { company_id: company.id },
-      _count: { _all: true },
-      _avg: { total_compensation: true }
+      orderBy: { total_compensation: 'desc' },
+      include: {
+        role: { select: { name: true, slug: true, category: true } }
+      }
     });
 
-    // We can fetch the actual role names
-    const roleIds = roleBreakdown.map(r => r.role_id);
-    const roles = await prisma.role.findMany({
-      where: { id: { in: roleIds } },
-      select: { id: true, name: true, slug: true }
+    // 1. Median Total Compensation
+    let median_total_compensation = "0";
+    if (rawSalaries.length > 0) {
+      // Already sorted descending
+      const mid = Math.floor(rawSalaries.length / 2);
+      median_total_compensation = rawSalaries[mid].total_compensation.toString();
+    }
+
+    // 2. Level Distribution
+    const level_distribution: Record<string, number> = {};
+    rawSalaries.forEach(s => {
+      level_distribution[s.level] = (level_distribution[s.level] || 0) + 1;
     });
 
-    const rolesMap = new Map(roles.map(r => [r.id, r]));
-
-    const enrichedRoleBreakdown = roleBreakdown.map(r => ({
-      role: rolesMap.get(r.role_id),
-      count: r._count._all,
-      avg_total_compensation: Math.round(r._avg.total_compensation || 0)
+    // 3. Serialize salaries list
+    const salaries = rawSalaries.map(salary => ({
+      ...salary,
+      base_salary: salary.base_salary.toString(),
+      bonus: salary.bonus.toString(),
+      stock: salary.stock.toString(),
+      signing_bonus: salary.signing_bonus.toString(),
+      total_compensation: salary.total_compensation.toString(),
+      confidence_score: salary.confidence_score.toNumber(),
     }));
 
     return NextResponse.json({
       data: {
-        ...company,
-        stats: {
-          overall_median: overallMedian,
-          total_submissions: company._count.salaries
-        },
-        roles: enrichedRoleBreakdown
+        company,
+        median_total_compensation,
+        level_distribution,
+        salaries
+      }
+    }, {
+      status: 200,
+      headers: {
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400'
       }
     });
   } catch (error) {
     console.error('Error fetching company:', error);
-    return NextResponse.json({ error: 'Failed to fetch company details' }, { status: 500 });
+    return NextResponse.json({ error: true, message: 'Failed to fetch company details' }, { status: 500 });
   }
 }
