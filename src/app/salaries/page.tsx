@@ -143,6 +143,25 @@ async function getSalariesData(params: Record<string, string | string[] | undefi
   };
 }
 
+async function getFilterOptions() {
+  const [rolesRaw, locationsRaw] = await Promise.all([
+    prisma.salary.findMany({
+      select: { role: true },
+      distinct: ['role'],
+      orderBy: { role: 'asc' },
+    }),
+    prisma.salary.findMany({
+      select: { location: true },
+      distinct: ['location'],
+      orderBy: { location: 'asc' },
+    }),
+  ]);
+  return {
+    roles: rolesRaw.map(r => r.role),
+    locations: locationsRaw.map(l => l.location),
+  };
+}
+
 export default async function SalariesPage({
   searchParams,
 }: {
@@ -150,6 +169,7 @@ export default async function SalariesPage({
 }) {
   const params = await searchParams;
   const { data: salaries, meta } = await getSalariesData(params);
+  const { roles, locations } = await getFilterOptions();
   
   const displayCurrency = (typeof params.currency === 'string' ? params.currency : 'USD') || 'USD';
 
@@ -191,7 +211,7 @@ export default async function SalariesPage({
       <Suspense fallback={
         <div className="bg-white p-4 rounded-lg shadow border border-gray-200 mb-6 h-32 animate-pulse" />
       }>
-        <FilterBar />
+        <FilterBar availableRoles={roles} availableLocations={locations} />
       </Suspense>
 
       <div className="mt-4 flex flex-col">

@@ -5,7 +5,12 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 const LEVELS = ['L3', 'L4', 'L5', 'L6', 'SDE_I', 'SDE_II', 'SDE_III', 'STAFF', 'PRINCIPAL', 'IC4', 'IC5'];
 
-export default function FilterBar() {
+interface FilterBarProps {
+  availableRoles?: string[];
+  availableLocations?: string[];
+}
+
+export default function FilterBar({ availableRoles = [], availableLocations = [] }: FilterBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -81,9 +86,9 @@ export default function FilterBar() {
             onChange={(e) => setRole(e.target.value)}
           >
             <option value="">All Roles</option>
-            <option value="Software Engineer">Software Engineer</option>
-            <option value="Data Analyst">Data Analyst</option>
-            <option value="Product Manager">Product Manager</option>
+            {availableRoles.map(r => (
+              <option key={r} value={r}>{r}</option>
+            ))}
           </select>
         </div>
         <div>
@@ -94,10 +99,9 @@ export default function FilterBar() {
             onChange={(e) => setLocation(e.target.value)}
           >
             <option value="">All Locations</option>
-            <option value="Bengaluru">Bengaluru</option>
-            <option value="Mumbai">Mumbai</option>
-            <option value="San Francisco">San Francisco</option>
-            <option value="London">London</option>
+            {availableLocations.map(l => (
+              <option key={l} value={l}>{l}</option>
+            ))}
           </select>
         </div>
         <div>
