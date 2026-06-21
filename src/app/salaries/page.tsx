@@ -30,20 +30,89 @@ export const metadata = {
   }
 };
 
+import { prisma } from '@/lib/prisma';
+import { Prisma, Level, Currency } from '@prisma/client';
+
+async function getSalariesData(params: Record<string, string | string[] | undefined>) {
+  const roleString = typeof params.role === 'string' ? params.role : undefined;
+  const companyString = typeof params.company === 'string' ? params.company : undefined;
+  const levelString = typeof params.level === 'string' ? params.level : undefined;
+  const locationString = typeof params.location === 'string' ? params.location : undefined;
+  const currencyString = typeof params.currency === 'string' ? params.currency : undefined;
+  
+  const sort = typeof params.sort === 'string' ? params.sort : 'total_comp_desc';
+  
+  let page = parseInt(typeof params.page === 'string' ? params.page : '1', 10);
+  if (isNaN(page) || page < 1) page = 1;
+  let limit = parseInt(typeof params.limit === 'string' ? params.limit : '25', 10);
+  if (isNaN(limit) || limit < 1) limit = 25;
+  if (limit > 100) limit = 100;
+  
+  const skip = (page - 1) * limit;
+
+  const where: Prisma.SalaryWhereInput = {};
+  
+  if (roleString) {
+    where.role = { contains: roleString, mode: 'insensitive' };
+  }
+  if (companyString) {
+    where.company = { normalized_name: { contains: companyString, mode: 'insensitive' } };
+  }
+  if (levelString && Object.keys(Level).includes(levelString)) {
+    where.level = levelString as Level;
+  }
+  if (locationString) {
+    where.location = { contains: locationString, mode: 'insensitive' };
+  }
+  if (currencyString && Object.keys(Currency).includes(currencyString)) {
+    where.currency = currencyString as Currency;
+  }
+
+  let orderBy: Prisma.SalaryOrderByWithRelationInput[] = [{ total_compensation: 'desc' }, { id: 'asc' }];
+  if (sort === 'date_desc') orderBy = [{ submitted_at: 'desc' }, { id: 'asc' }];
+  if (sort === 'total_comp_asc') orderBy = [{ total_compensation: 'asc' }, { id: 'asc' }];
+  if (sort === 'total_comp_desc') orderBy = [{ total_compensation: 'desc' }, { id: 'asc' }];
+
+  const [totalCount, rawSalaries] = await Promise.all([
+    prisma.salary.count({ where }),
+    prisma.salary.findMany({
+      where,
+      take: limit,
+      skip,
+      orderBy,
+      include: {
+        company: { select: { name: true, slug: true } }
+      }
+    })
+  ]);
+
+  const salaries = rawSalaries.map(salary => ({
+    ...salary,
+    base_salary: salary.base_salary.toString(),
+    bonus: salary.bonus.toString(),
+    stock: salary.stock.toString(),
+    total_compensation: salary.total_compensation.toString(),
+    confidence_score: salary.confidence_score.toNumber(),
+  }));
+
+  return {
+    data: salaries,
+    meta: {
+      total: totalCount,
+      page,
+      limit,
+      totalPages: Math.ceil(totalCount / limit)
+    }
+  };
+}
+
 export default async function SalariesPage({
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const params = await searchParams;
-  const queryString = new URLSearchParams(params as Record<string, string>).toString();
-
-  // 1. Fetch from API (Integration Rule FS3)
-  const host = process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : 'http://localhost:3000';
-  const apiUrl = `${host}/api/salaries?${queryString}`;
-  
-  const res = await fetch(apiUrl, { cache: 'no-store' }); // Using dynamic fetching for search params
-  const { data: salaries, meta } = await res.json();
+  const { data: salaries, meta } = await getSalariesData(params);
   
   const displayCurrency = (typeof params.currency === 'string' ? params.currency : 'USD') || 'USD';
 
@@ -94,7 +163,7 @@ export default async function SalariesPage({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#EBEBEB] bg-[#FFFFFF]">
-                  {salaries && salaries.map((salary: {id: string, company: {name: string}, role: string, level: string, location: string, experience_years: string, base_salary: string, currency: string, stock: string, total_compensation: string}) => (
+                  {salaries && salaries.map((salary: {id: string, company: {name: string}, role: string, level: string, location: string, experience_years: number, base_salary: string, currency: string, stock: string, total_compensation: string}) => (
                     <tr key={salary.id} className="hover:bg-[#F2F2F2] transition-colors">
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-[#222222] sm:pl-6">
                         {salary.company.name}
