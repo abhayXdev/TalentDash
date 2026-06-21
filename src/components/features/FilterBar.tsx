@@ -8,7 +8,13 @@ const LEVELS = [
   { id: 'L4', label: 'L4 (Mid)' },
   { id: 'L5', label: 'L5 (Senior)' },
   { id: 'L6', label: 'L6 (Staff)' },
-  { id: 'PRINCIPAL', label: 'Principal+' }
+  { id: 'SDE_I', label: 'SDE I' },
+  { id: 'SDE_II', label: 'SDE II' },
+  { id: 'SDE_III', label: 'SDE III' },
+  { id: 'STAFF', label: 'Staff' },
+  { id: 'PRINCIPAL', label: 'Principal+' },
+  { id: 'IC4', label: 'IC4' },
+  { id: 'IC5', label: 'IC5' }
 ];
 
 interface FilterBarProps {
@@ -81,14 +87,16 @@ export default function FilterBar({ availableRoles = [], availableLocations = []
             Company
           </label>
           <div className="relative">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">
-              search
-            </span>
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <span className="material-symbols-outlined text-on-surface-variant text-lg">
+                search
+              </span>
+            </div>
             <input
               type="text"
               value={company}
               onChange={(e) => setCompany(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-surface-container-highest rounded-lg text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors h-[38px]"
+              className="w-full pl-11 pr-4 py-2 bg-surface-container-low border border-surface-container-highest rounded-lg text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors h-[38px]"
               placeholder="Search by company name..."
             />
           </div>

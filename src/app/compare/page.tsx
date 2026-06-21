@@ -2,214 +2,386 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import CompanyLogo from '@/components/ui/CompanyLogo';
 
-function formatCurrency(amountStr: string) {
-  const amount = Number(amountStr);
-  if (amount === 0) return "—";
-  return amount.toLocaleString();
-}
-
-function formatDelta(amount: number) {
-  if (amount === 0) return "0";
-  if (amount > 0) return <span className="text-[#008A05] font-medium">+{amount.toLocaleString()}</span>;
-  return <span className="text-[#D93025] font-medium">-{Math.abs(amount).toLocaleString()}</span>;
+function formatMoney(amountStr: string, isShort = false) {
+  const inrValue = Number(amountStr);
+  if (inrValue === 0) return '—';
+  
+  if (isShort) {
+    if (inrValue >= 10000000) {
+      return `₹${(inrValue / 10000000).toFixed(1).replace(/\.0$/, '')}Cr`;
+    }
+    if (inrValue >= 100000) {
+      return `₹${Math.round(inrValue / 100000)}L`;
+    }
+    return `₹${Math.round(inrValue / 1000)}k`;
+  }
+  return '₹' + Math.round(inrValue).toLocaleString('en-IN');
 }
 
 function CompareContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
+  // Let the user select two companies to compare.
+  // We use our companies API endpoint or a pre-fetched list.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [salaries, setSalaries] = useState<any[]>([]);
-  const [s1, setS1] = useState(searchParams.get('s1') || '');
-  const [s2, setS2] = useState(searchParams.get('s2') || '');
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [compAId, setCompAId] = useState<string>(searchParams.get('c1') || '');
+  const [compBId, setCompBId] = useState<string>(searchParams.get('c2') || '');
+  
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [compareData, setCompareData] = useState<any>(null);
+  const [companyA, setCompanyA] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [companyB, setCompanyB] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // 1. Fetch available salaries for dropdowns
+  // 1. Fetch available companies for dropdowns
   useEffect(() => {
-    fetch('/api/salaries?limit=100')
+    fetch('/api/companies')
       .then(res => res.json())
       .then(json => {
-        if (json.data) setSalaries(json.data);
+        if (json.data) {
+          setCompanies(json.data);
+          const c1 = searchParams.get('c1');
+          const c2 = searchParams.get('c2');
+          if (!c1 && json.data.length > 0) setCompAId(json.data[0].slug);
+          if (!c2 && json.data.length > 1) setCompBId(json.data[1].slug);
+        }
       })
-      .catch(console.error);
-  }, []);
-
-  // 2. Sync URL when selections change
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (s1) params.set('s1', s1);
-    if (s2) params.set('s2', s2);
-    // Use replace to avoid filling history
-    router.replace(`/compare?${params.toString()}`);
-  }, [s1, s2, router]);
-
-  // 3. Fetch comparison data when s1 and s2 are present
-  useEffect(() => {
-    if (!s1 || !s2) {
-      setCompareData(null);
-      setLoading(false);
-      return;
-    }
-    
-    if (s1 === s2) {
-      setCompareData({ error: 'Cannot compare identical records' });
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    fetch(`/api/compare?s1=${s1}&s2=${s2}`)
-      .then(res => res.json())
-      .then(json => {
-        if (json.error) setCompareData({ error: json.message });
-        else setCompareData(json.data);
-      })
-      .catch(() => setCompareData({ error: 'Failed to fetch comparison' }))
+      .catch(console.error)
       .finally(() => setLoading(false));
-  }, [s1, s2]);
+  }, [searchParams]);
+
+  // 2. Sync URL
+  useEffect(() => {
+    if (!compAId && !compBId) return;
+    const params = new URLSearchParams();
+    if (compAId) params.set('c1', compAId);
+    if (compBId) params.set('c2', compBId);
+    router.replace(`/compare?${params.toString()}`);
+  }, [compAId, compBId, router]);
+
+  // 3. Fetch Company A
+  useEffect(() => {
+    if (!compAId) return;
+    setLoading(true);
+    fetch(`/api/companies/${compAId}`)
+      .then(res => res.json())
+      .then(json => {
+        if (json.data) setCompanyA(json.data);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [compAId]);
+
+  // 4. Fetch Company B
+  useEffect(() => {
+    if (!compBId) return;
+    setLoading(true);
+    fetch(`/api/companies/${compBId}`)
+      .then(res => res.json())
+      .then(json => {
+        if (json.data) setCompanyB(json.data);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [compBId]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <h1 className="text-3xl font-extrabold text-[#222222] tracking-tight mb-8">Compare Compensation</h1>
-      
-      {/* Selectors */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 bg-white p-6 rounded-lg shadow-sm border border-[#EBEBEB]">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Select Record A</label>
-          <select
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-white"
-            value={s1}
-            onChange={(e) => setS1(e.target.value)}
-          >
-            <option value="">-- Choose a record --</option>
-            {salaries.map(s => (
-              <option key={s.id} value={s.id}>
-                {s.company.name} - {s.role} ({s.level}) - {s.location}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Select Record B</label>
-          <select
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-white"
-            value={s2}
-            onChange={(e) => setS2(e.target.value)}
-          >
-            <option value="">-- Choose a record --</option>
-            {salaries.map(s => (
-              <option key={s.id} value={s.id}>
-                {s.company.name} - {s.role} ({s.level}) - {s.location}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+      <header className="mb-6">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-on-surface mb-2 tracking-tight">
+          Compare Compensation Ranges
+        </h1>
+        <p className="text-base text-on-surface-variant max-w-2xl font-normal">
+          Select any two premium tech giants to benchmark their compensation layouts, level structures, and median salaries side-by-side.
+        </p>
+      </header>
 
-      {/* Comparison Results */}
-      {loading && s1 && s2 && (
-        <div className="bg-white rounded-lg shadow-sm border border-[#EBEBEB] overflow-hidden animate-pulse">
-          <div className="h-14 bg-[#F7F7F7] border-b border-[#EBEBEB] w-full flex">
-             <div className="w-1/4 h-full"></div>
-             <div className="w-1/4 h-full border-l border-[#EBEBEB]"></div>
-             <div className="w-1/4 h-full border-l border-[#EBEBEB]"></div>
-             <div className="w-1/4 h-full border-l border-[#EBEBEB]"></div>
+      {/* Select selectors */}
+      <section className="bg-surface-container-lowest border border-surface-container-highest p-4 rounded-xl shadow-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-bold text-on-surface-variant mb-1 uppercase tracking-wider">
+              Benchmark Target (Company A)
+            </label>
+            <select
+              value={compAId}
+              onChange={(e) => setCompAId(e.target.value)}
+              className="w-full bg-surface border border-surface-container-highest rounded-lg px-3 py-2 text-sm font-semibold text-on-surface focus:outline-none focus:border-primary"
+            >
+              {companies.map((c) => (
+                <option key={`a-${c.id}`} value={c.slug}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
           </div>
-          {[...Array(6)].map((_, i) => (
-             <div key={i} className="h-16 border-b border-[#EBEBEB] w-full flex items-center px-6">
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-             </div>
-          ))}
+
+          <div>
+            <label className="block text-xs font-bold text-on-surface-variant mb-1 uppercase tracking-wider">
+              Comparison Target (Company B)
+            </label>
+            <select
+              value={compBId}
+              onChange={(e) => setCompBId(e.target.value)}
+              className="w-full bg-surface border border-surface-container-highest rounded-lg px-3 py-2 text-sm font-semibold text-on-surface focus:outline-none focus:border-primary"
+            >
+              {companies.map((c) => (
+                <option key={`b-${c.id}`} value={c.slug}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-      )}
-      
-      {!loading && compareData && compareData.error && (
-        <div className="bg-red-50 p-4 rounded-md border border-red-200 text-red-700 text-center">
-          {compareData.error}
+      </section>
+
+      {/* Loading Skeleton */}
+      {loading && (!companyA || !companyB) && (
+        <div className="bg-surface-container-lowest border border-surface-container-highest p-6 rounded-xl animate-pulse">
+          <div className="h-6 bg-surface-container-low rounded w-1/4 mb-4"></div>
+          <div className="h-4 bg-surface-container-low rounded w-1/2 mb-2"></div>
+          <div className="h-4 bg-surface-container-low rounded w-1/3"></div>
         </div>
       )}
 
-      {!loading && compareData && !compareData.error && (
-        <div className="bg-white rounded-lg shadow-sm border border-[#EBEBEB] overflow-hidden">
-          <table className="min-w-full divide-y divide-[#EBEBEB]">
-            <thead className="bg-[#F7F7F7]">
-              <tr>
-                <th className="py-4 pl-6 text-left text-sm font-semibold text-[#717171] w-1/4">Metric</th>
-                <th className="py-4 px-4 text-left text-lg font-bold text-[#222222] w-1/4">
-                  {compareData.record_1.company.name}
-                  {Number(compareData.record_1.total_compensation) > Number(compareData.record_2.total_compensation) && (
-                    <span className="ml-2 inline-flex items-center rounded-full bg-[#E0F2FE] px-2.5 py-0.5 text-xs font-medium text-[#0369A1] ring-1 ring-inset ring-[#0369A1]/20">
-                      Higher TC
-                    </span>
-                  )}
-                </th>
-                <th className="py-4 px-4 text-left text-lg font-bold text-[#222222] w-1/4">
-                  {compareData.record_2.company.name}
-                  {Number(compareData.record_2.total_compensation) > Number(compareData.record_1.total_compensation) && (
-                    <span className="ml-2 inline-flex items-center rounded-full bg-[#E0F2FE] px-2.5 py-0.5 text-xs font-medium text-[#0369A1] ring-1 ring-inset ring-[#0369A1]/20">
-                      Higher TC
-                    </span>
-                  )}
-                </th>
-                <th className="py-4 pr-6 text-right text-sm font-semibold text-[#717171] w-1/4">Delta (A - B)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#EBEBEB] bg-[#FFFFFF]">
-              <tr className="hover:bg-[#F2F2F2]">
-                <td className="py-4 pl-6 text-sm font-medium text-[#717171]">Role</td>
-                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_1.role}</td>
-                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_2.role}</td>
-                <td className="py-4 pr-6 text-right text-sm text-gray-500">—</td>
-              </tr>
-              <tr className="hover:bg-[#F2F2F2]">
-                <td className="py-4 pl-6 text-sm font-medium text-[#717171]">Level</td>
-                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_1.level}</td>
-                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_2.level}</td>
-                <td className="py-4 pr-6 text-right text-sm text-gray-500">—</td>
-              </tr>
-              <tr className="hover:bg-[#F2F2F2]">
-                <td className="py-4 pl-6 text-sm font-medium text-[#717171]">Location</td>
-                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_1.location}</td>
-                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_2.location}</td>
-                <td className="py-4 pr-6 text-right text-sm text-gray-500">—</td>
-              </tr>
-              <tr className="hover:bg-[#F2F2F2]">
-                <td className="py-4 pl-6 text-sm font-medium text-[#717171]">Experience</td>
-                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_1.experience_years} yrs</td>
-                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_2.experience_years} yrs</td>
-                <td className="py-4 pr-6 text-right text-sm">{formatDelta(compareData.delta.experience_delta)} yrs</td>
-              </tr>
-              <tr className="hover:bg-[#F2F2F2]">
-                <td className="py-4 pl-6 text-sm font-medium text-[#717171]">Base Salary</td>
-                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_1.currency} {formatCurrency(compareData.record_1.base_salary)}</td>
-                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_2.currency} {formatCurrency(compareData.record_2.base_salary)}</td>
-                <td className="py-4 pr-6 text-right text-sm">{formatDelta(compareData.delta.base_delta)}</td>
-              </tr>
-              <tr className="hover:bg-[#F2F2F2]">
-                <td className="py-4 pl-6 text-sm font-medium text-[#717171]">Bonus</td>
-                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_1.currency} {formatCurrency(compareData.record_1.bonus)}</td>
-                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_2.currency} {formatCurrency(compareData.record_2.bonus)}</td>
-                <td className="py-4 pr-6 text-right text-sm">{formatDelta(compareData.delta.bonus_delta)}</td>
-              </tr>
-              <tr className="hover:bg-[#F2F2F2]">
-                <td className="py-4 pl-6 text-sm font-medium text-[#717171]">Stock</td>
-                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_1.currency} {formatCurrency(compareData.record_1.stock)}</td>
-                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_2.currency} {formatCurrency(compareData.record_2.stock)}</td>
-                <td className="py-4 pr-6 text-right text-sm">{formatDelta(compareData.delta.stock_delta)}</td>
-              </tr>
-              <tr className="bg-blue-50">
-                <td className="py-5 pl-6 text-base font-bold text-[#0369A1]">Total Compensation</td>
-                <td className="py-5 px-4 text-[32px] font-bold text-[#0369A1]">{compareData.record_1.currency} {formatCurrency(compareData.record_1.total_compensation)}</td>
-                <td className="py-5 px-4 text-[32px] font-bold text-[#0369A1]">{compareData.record_2.currency} {formatCurrency(compareData.record_2.total_compensation)}</td>
-                <td className="py-5 pr-6 text-right text-[32px] font-bold">{formatDelta(compareData.delta.tc_delta)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
+      {/* Comparison Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Company A comparison segment */}
+        {companyA && (
+          <article className="bg-surface-container-lowest border border-surface-container-highest rounded-xl p-6 shadow-xs space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 object-contain rounded-lg border border-surface-container-high p-1.5 flex items-center justify-center shrink-0">
+                <CompanyLogo name={companyA.name} />
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-primary tracking-wider">
+                  Listing A
+                </span>
+                <h2 className="text-2xl font-black text-on-surface leading-tight">
+                  {companyA.name}
+                </h2>
+              </div>
+            </div>
+
+            {/* Median total comp */}
+            <div className="bg-surface p-4 rounded-xl border border-surface-container-high">
+              <span className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
+                Median Total Comp
+              </span>
+              <div className="text-2xl font-black text-secondary mt-1">
+                {formatMoney(companyA.median_total_compensation)}
+              </div>
+              <div className="text-xs text-on-surface-variant font-medium mt-1">
+                Based on verified peer benchmarks.
+              </div>
+            </div>
+
+            {/* Span Range */}
+            <div>
+              <span className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-2">
+                Compensation Span
+              </span>
+              <div className="flex justify-between items-baseline mb-2">
+                <span className="text-sm font-bold text-on-surface">
+                  {formatMoney(companyA.minTC, true)}
+                </span>
+                <span className="text-xs text-on-surface-variant font-medium">to</span>
+                <span className="text-sm font-bold text-on-surface">
+                  {formatMoney(companyA.maxTC, true)}+
+                </span>
+              </div>
+              <div className="w-full bg-surface-container-high h-2.5 rounded-full overflow-hidden">
+                <div className="bg-[#ff5a5f] w-4/6 h-full rounded-full"></div>
+              </div>
+            </div>
+
+            {/* Level Distribution side comparison */}
+            <div>
+              <span className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-3">
+                Level Distribution (SWE)
+              </span>
+              <div className="space-y-2 text-xs font-semibold text-on-surface-variant border-t border-surface-container-low pt-3">
+                <div className="flex items-center justify-between">
+                  <span>L3 (Entry)</span>
+                  <span className="text-on-surface font-bold">{companyA.levelDistribution.l3}%</span>
+                </div>
+                <div className="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-[#cde5ff] h-full" style={{ width: `${companyA.levelDistribution.l3}%` }} />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span>L4 (Mid)</span>
+                  <span className="text-on-surface font-bold">{companyA.levelDistribution.l4}%</span>
+                </div>
+                <div className="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-[#7bc2ff] h-full" style={{ width: `${companyA.levelDistribution.l4}%` }} />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span>L5 (Senior)</span>
+                  <span className="text-on-surface font-bold">{companyA.levelDistribution.l5}%</span>
+                </div>
+                <div className="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-[#006399] h-full" style={{ width: `${companyA.levelDistribution.l5}%` }} />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span>L6+ (Staff+)</span>
+                  <span className="text-on-surface font-bold">{companyA.levelDistribution.l6Plus}%</span>
+                </div>
+                <div className="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-[#001d32] h-full" style={{ width: `${companyA.levelDistribution.l6Plus}%` }} />
+                </div>
+              </div>
+            </div>
+
+            {/* Key Facts */}
+            <div className="border-t border-surface-container-high pt-4 space-y-2">
+              <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
+                Profile Parameters
+              </h4>
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                  <span className="text-on-surface-variant block font-medium">Headquarters</span>
+                  <strong className="text-on-surface font-semibold">{companyA.headquarters || 'Global'}</strong>
+                </div>
+                <div>
+                  <span className="text-on-surface-variant block font-medium">Founded</span>
+                  <strong className="text-on-surface font-semibold">{companyA.founded_year || 'N/A'}</strong>
+                </div>
+                <div>
+                  <span className="text-on-surface-variant block font-medium">employees</span>
+                  <strong className="text-on-surface font-semibold">{companyA.headcount_range || '10,000+'}</strong>
+                </div>
+                <div>
+                  <span className="text-on-surface-variant block font-medium">Industry</span>
+                  <strong className="text-on-surface font-semibold">{companyA.industry || 'Technology'}</strong>
+                </div>
+              </div>
+            </div>
+          </article>
+        )}
+
+        {/* Company B comparison segment */}
+        {companyB && (
+          <article className="bg-surface-container-lowest border border-surface-container-highest rounded-xl p-6 shadow-xs space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 object-contain rounded-lg border border-surface-container-high p-1.5 flex items-center justify-center shrink-0">
+                <CompanyLogo name={companyB.name} />
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-primary tracking-wider">
+                  Listing B
+                </span>
+                <h2 className="text-2xl font-black text-on-surface leading-tight">
+                  {companyB.name}
+                </h2>
+              </div>
+            </div>
+
+            {/* Median total comp */}
+            <div className="bg-surface p-4 rounded-xl border border-surface-container-high">
+              <span className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
+                Median Total Comp
+              </span>
+              <div className="text-2xl font-black text-secondary mt-1">
+                {formatMoney(companyB.median_total_compensation)}
+              </div>
+              <div className="text-xs text-on-surface-variant font-medium mt-1">
+                Based on verified peer benchmarks.
+              </div>
+            </div>
+
+            {/* Span Range */}
+            <div>
+              <span className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-2">
+                Compensation Span
+              </span>
+              <div className="flex justify-between items-baseline mb-2">
+                <span className="text-sm font-bold text-on-surface">
+                  {formatMoney(companyB.minTC, true)}
+                </span>
+                <span className="text-xs text-on-surface-variant font-medium">to</span>
+                <span className="text-sm font-bold text-on-surface">
+                  {formatMoney(companyB.maxTC, true)}+
+                </span>
+              </div>
+              <div className="w-full bg-surface-container-high h-2.5 rounded-full overflow-hidden">
+                <div className="bg-[#ff5a5f] w-5/6 h-full rounded-full"></div>
+              </div>
+            </div>
+
+            {/* Level Distribution side comparison */}
+            <div>
+              <span className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider block mb-3">
+                Level Distribution (SWE)
+              </span>
+              <div className="space-y-2 text-xs font-semibold text-on-surface-variant border-t border-surface-container-low pt-3">
+                <div className="flex items-center justify-between">
+                  <span>L3 (Entry)</span>
+                  <span className="text-on-surface font-bold">{companyB.levelDistribution.l3}%</span>
+                </div>
+                <div className="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-[#cde5ff] h-full" style={{ width: `${companyB.levelDistribution.l3}%` }} />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span>L4 (Mid)</span>
+                  <span className="text-on-surface font-bold">{companyB.levelDistribution.l4}%</span>
+                </div>
+                <div className="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-[#7bc2ff] h-full" style={{ width: `${companyB.levelDistribution.l4}%` }} />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span>L5 (Senior)</span>
+                  <span className="text-on-surface font-bold">{companyB.levelDistribution.l5}%</span>
+                </div>
+                <div className="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-[#006399] h-full" style={{ width: `${companyB.levelDistribution.l5}%` }} />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span>L6+ (Staff+)</span>
+                  <span className="text-on-surface font-bold">{companyB.levelDistribution.l6Plus}%</span>
+                </div>
+                <div className="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-[#001d32] h-full" style={{ width: `${companyB.levelDistribution.l6Plus}%` }} />
+                </div>
+              </div>
+            </div>
+
+            {/* Key Facts */}
+            <div className="border-t border-surface-container-high pt-4 space-y-2">
+              <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
+                Profile Parameters
+              </h4>
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                  <span className="text-on-surface-variant block font-medium">Headquarters</span>
+                  <strong className="text-on-surface font-semibold">{companyB.headquarters || 'Global'}</strong>
+                </div>
+                <div>
+                  <span className="text-on-surface-variant block font-medium">Founded</span>
+                  <strong className="text-on-surface font-semibold">{companyB.founded_year || 'N/A'}</strong>
+                </div>
+                <div>
+                  <span className="text-on-surface-variant block font-medium">employees</span>
+                  <strong className="text-on-surface font-semibold">{companyB.headcount_range || '10,000+'}</strong>
+                </div>
+                <div>
+                  <span className="text-on-surface-variant block font-medium">Industry</span>
+                  <strong className="text-on-surface font-semibold">{companyB.industry || 'Technology'}</strong>
+                </div>
+              </div>
+            </div>
+          </article>
+        )}
+      </div>
     </div>
   );
 }

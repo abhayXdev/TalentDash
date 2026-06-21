@@ -16,13 +16,11 @@ export async function GET(
       return NextResponse.json({ error: true, message: 'Company not found' }, { status: 404 });
     }
 
-    // Fetch all salaries for this company to compute median and level distribution
     const rawSalaries = await prisma.salary.findMany({
       where: { company_id: company.id },
       orderBy: { total_compensation: 'desc' }
     });
 
-    // 1. Median Total Compensation
     let median_total_compensation = "0";
     if (rawSalaries.length > 0) {
       const mid = Math.floor(rawSalaries.length / 2);
@@ -34,13 +32,28 @@ export async function GET(
       }
     }
 
-    // 2. Level Distribution
-    const level_distribution: Record<string, number> = {};
+    const level_distribution = { l3: 0, l4: 0, l5: 0, l6Plus: 0 };
+    let totalLevelRecords = 0;
+    
     rawSalaries.forEach(s => {
-      level_distribution[s.level] = (level_distribution[s.level] || 0) + 1;
+      const lvl = s.level.toUpperCase();
+      if (lvl.includes('L3') || lvl.includes('SDE_I')) level_distribution.l3++;
+      else if (lvl.includes('L4') || lvl.includes('SDE_II')) level_distribution.l4++;
+      else if (lvl.includes('L5') || lvl.includes('SDE_III')) level_distribution.l5++;
+      else level_distribution.l6Plus++;
+      totalLevelRecords++;
     });
 
-    // 3. Serialize salaries list
+    const levelDistributionPercentages = {
+      l3: totalLevelRecords ? Math.round((level_distribution.l3 / totalLevelRecords) * 100) : 0,
+      l4: totalLevelRecords ? Math.round((level_distribution.l4 / totalLevelRecords) * 100) : 0,
+      l5: totalLevelRecords ? Math.round((level_distribution.l5 / totalLevelRecords) * 100) : 0,
+      l6Plus: totalLevelRecords ? Math.round((level_distribution.l6Plus / totalLevelRecords) * 100) : 0,
+    };
+
+    const minTC = rawSalaries.length > 0 ? Number(rawSalaries[rawSalaries.length - 1].total_compensation) : 0;
+    const maxTC = rawSalaries.length > 0 ? Number(rawSalaries[0].total_compensation) : 0;
+
     const salaries = rawSalaries.map(salary => ({
       ...salary,
       base_salary: salary.base_salary.toString(),
@@ -52,9 +65,11 @@ export async function GET(
 
     return NextResponse.json({
       data: {
-        company,
+        ...company,
         median_total_compensation,
-        level_distribution,
+        levelDistribution: levelDistributionPercentages,
+        minTC,
+        maxTC,
         salaries
       }
     }, {

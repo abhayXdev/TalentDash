@@ -9,10 +9,10 @@ export default function Footer() {
           </span>
         </div>
         <div className="flex flex-wrap justify-center gap-6 text-[13px] font-semibold text-on-surface-variant">
-          <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
-          <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
-          <a href="#" className="hover:text-primary transition-colors">Data Integrity</a>
-          <a href="#" className="hover:text-primary transition-colors">Contact</a>
+          <span>Privacy Policy</span>
+          <span>Terms of Service</span>
+          <span>Data Integrity</span>
+          <span>Contact</span>
         </div>
       </div>
     </footer>
