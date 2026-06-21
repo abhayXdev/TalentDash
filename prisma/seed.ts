@@ -33,18 +33,18 @@ async function main() {
 
   console.log('Seeding Companies...');
   const companiesData = [
-    { name: 'Google', rawNames: ['Google', 'GOOGLE', 'google', 'Google India'] },
-    { name: 'Amazon', rawNames: ['Amazon', 'Amazon Web Services', 'amazon.com'] },
-    { name: 'Meta', rawNames: ['Meta'] },
-    { name: 'Microsoft', rawNames: ['Microsoft'] },
-    { name: 'Flipkart', rawNames: ['Flipkart', 'Flipkart Internet Pvt Ltd'] },
-    { name: 'Meesho', rawNames: ['Meesho'] },
-    { name: 'NVIDIA', rawNames: ['NVIDIA'] },
-    { name: 'TCS', rawNames: ['TCS', 'Tata Consultancy Services', 'TCS Ltd.'] },
-    { name: 'Infosys', rawNames: ['Infosys', 'Infosys BPO'] },
-    { name: 'Wipro', rawNames: ['Wipro', 'Wipro Technologies'] },
-    { name: 'Razorpay', rawNames: ['Razorpay'] },
-    { name: 'Zepto', rawNames: ['Zepto'] }
+    { name: 'Google', rawNames: ['Google', 'GOOGLE', 'google', 'Google India'], headquarters: 'Mountain View, CA', founded_year: 1998, headcount_range: '100,000+' },
+    { name: 'Amazon', rawNames: ['Amazon', 'Amazon Web Services', 'amazon.com'], headquarters: 'Seattle, WA', founded_year: 1994, headcount_range: '1,000,000+' },
+    { name: 'Meta', rawNames: ['Meta'], headquarters: 'Menlo Park, CA', founded_year: 2004, headcount_range: '50,000+' },
+    { name: 'Microsoft', rawNames: ['Microsoft'], headquarters: 'Redmond, WA', founded_year: 1975, headcount_range: '200,000+' },
+    { name: 'Flipkart', rawNames: ['Flipkart', 'Flipkart Internet Pvt Ltd'], headquarters: 'Bengaluru, India', founded_year: 2007, headcount_range: '30,000+' },
+    { name: 'Meesho', rawNames: ['Meesho'], headquarters: 'Bengaluru, India', founded_year: 2015, headcount_range: '1,000+' },
+    { name: 'NVIDIA', rawNames: ['NVIDIA'], headquarters: 'Santa Clara, CA', founded_year: 1993, headcount_range: '20,000+' },
+    { name: 'TCS', rawNames: ['TCS', 'Tata Consultancy Services', 'TCS Ltd.'], headquarters: 'Mumbai, India', founded_year: 1968, headcount_range: '600,000+' },
+    { name: 'Infosys', rawNames: ['Infosys', 'Infosys BPO'], headquarters: 'Bengaluru, India', founded_year: 1981, headcount_range: '300,000+' },
+    { name: 'Wipro', rawNames: ['Wipro', 'Wipro Technologies'], headquarters: 'Bengaluru, India', founded_year: 1945, headcount_range: '200,000+' },
+    { name: 'Razorpay', rawNames: ['Razorpay'], headquarters: 'Bengaluru, India', founded_year: 2014, headcount_range: '1,000+' },
+    { name: 'Zepto', rawNames: ['Zepto'], headquarters: 'Mumbai, India', founded_year: 2021, headcount_range: '1,000+' }
   ];
 
   const companiesMap = new Map();
@@ -56,6 +56,9 @@ async function main() {
         slug,
         normalized_name: normalized,
         industry: 'Technology',
+        headquarters: cData.headquarters,
+        founded_year: cData.founded_year,
+        headcount_range: cData.headcount_range,
       }
     });
     for (const rawName of cData.rawNames) {
