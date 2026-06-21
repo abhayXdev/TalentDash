@@ -36,6 +36,16 @@ export async function generateStaticParams() {
   }));
 }
 
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const companyName = slug.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+  return {
+    title: `${companyName} Salaries & Level Distribution | TalentDash`,
+    description: `Detailed compensation data and level distribution for ${companyName} software engineers.`,
+    alternates: { canonical: `https://talentdash.com/companies/${slug}` },
+  };
+}
+
 export default async function CompanyPage({
   params,
 }: {
@@ -75,8 +85,21 @@ export default async function CompanyPage({
     maxTC = Number(salaries[0].total_compensation);
   }
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": company.name,
+    "url": `https://talentdash.com/companies/${slug}`,
+    "industry": company.industry,
+    "foundingDate": company.founded_year ? String(company.founded_year) : undefined,
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       
       {/* 1. Company Header & Navigation */}
       <div className="mb-6">

@@ -28,6 +28,17 @@ function formatCurrency(amountStr: string, fromCurrency: string, toCurrency: str
   return `${symbol}${amount.toLocaleString(locale, { maximumFractionDigits: 0 })}`;
 }
 
+export const metadata = {
+  title: 'Software Engineer Salaries in India — L3 to L5 | TalentDash',
+  description: 'Compare software engineer salaries across top tech companies in India. Filter by role, level, location, and total comp.',
+  alternates: { canonical: 'https://talentdash.com/salaries' },
+  openGraph: {
+    title: 'Software Engineer Salaries in India — L3 to L5 | TalentDash',
+    description: 'Compare software engineer salaries across top tech companies in India.',
+    url: 'https://talentdash.com/salaries',
+  }
+};
+
 export default async function SalariesPage({
   searchParams,
 }: {
@@ -45,8 +56,20 @@ export default async function SalariesPage({
   
   const displayCurrency = (typeof params.currency === 'string' ? params.currency : 'USD') || 'USD';
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    "name": "Software Engineer Salaries in India",
+    "description": "Compensation data for tech roles across top companies.",
+    "url": "https://talentdash.com/salaries"
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="sm:flex sm:items-center sm:justify-between mb-4">
         <div>
           <h1 className="text-3xl font-extrabold text-[#222222] tracking-tight">Software Engineer Salaries in India</h1>

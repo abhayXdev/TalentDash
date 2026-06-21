@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest) {
 
     try {
       // Extract IP (Next.js request.ip -> x-forwarded-for -> fallback)
-      const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown-ip';
+      const ip = request.headers.get('x-forwarded-for') || 'unknown-ip';
       const identifier = `ratelimit:salary:${ip}`;
 
       const { success } = await ratelimit.limit(identifier);

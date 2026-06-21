@@ -6,9 +6,9 @@ import { z } from 'zod';
 const ingestSchema = z.object({
   company: z.string().min(1, "Company name is required"),
   role: z.string().min(1, "Role is required"),
-  level: z.nativeEnum(Level, { errorMap: () => ({ message: "Level must be one of: L3, L4, L5, L6, SDE_I, SDE_II, SDE_III, STAFF, PRINCIPAL, IC4, IC5" }) }),
+  level: z.nativeEnum(Level, { message: "Level must be one of: L3, L4, L5, L6, SDE_I, SDE_II, SDE_III, STAFF, PRINCIPAL, IC4, IC5" }),
   location: z.string().min(1, "Location is required"),
-  currency: z.nativeEnum(Currency, { errorMap: () => ({ message: "Currency must be INR, USD, GBP, or EUR" }) }).optional().default(Currency.USD),
+  currency: z.nativeEnum(Currency, { message: "Currency must be INR, USD, GBP, or EUR" }).optional().default(Currency.USD),
   experience_years: z.number().positive("Experience years must be > 0").lt(51, "Experience years must be < 51"),
   company_tenure: z.number().min(0).optional().nullable(),
   base_salary: z.number().int().positive("Base salary must be > 0"),
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     const parsed = ingestSchema.safeParse(body);
     if (!parsed.success) {
-      const firstError = parsed.error.errors[0];
+      const firstError = (parsed.error as any).errors[0] || (parsed.error as any).issues[0];
       return NextResponse.json(
         { error: true, field: firstError.path.join('.'), message: firstError.message },
         { status: 400 }
