@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     const tc_delta = Number(record1.total_compensation) - Number(record2.total_compensation);
     const experience_delta = record1.experience_years - record2.experience_years;
 
-    const serializeRecord = (r: any) => ({
+    const serializeRecord = (r: NonNullable<typeof record1>) => ({
       ...r,
       base_salary: r.base_salary.toString(),
       bonus: r.bonus.toString(),

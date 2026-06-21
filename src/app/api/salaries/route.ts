@@ -14,8 +14,10 @@ export async function GET(request: NextRequest) {
     
     const sort = searchParams.get('sort') || 'total_comp_desc'; // date_desc, total_comp_desc, total_comp_asc
     
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    let page = parseInt(searchParams.get('page') || '1', 10);
+    if (isNaN(page) || page < 1) page = 1;
     let limit = parseInt(searchParams.get('limit') || '25', 10);
+    if (isNaN(limit) || limit < 1) limit = 25;
     
     // Hard failure cap
     if (limit > 100) limit = 100;

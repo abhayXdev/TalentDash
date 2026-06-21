@@ -84,7 +84,7 @@ export default async function CompanyPage({
   const { company, median_total_compensation, level_distribution, salaries } = data;
 
   const totalRecords = salaries.length;
-  const isINR = salaries.filter((s: any) => s.currency === 'INR').length > totalRecords / 2;
+  const isINR = salaries.filter((s: {currency: string}) => s.currency === 'INR').length > totalRecords / 2;
   const primaryCurrency = isINR ? 'INR' : 'USD';
 
   const minTC = totalRecords > 0 ? Number(salaries[salaries.length - 1].total_compensation) : 0;
@@ -154,8 +154,9 @@ export default async function CompanyPage({
         <div className="bg-white p-6 rounded-lg shadow-sm border border-[#EBEBEB]">
           <p className="text-sm font-medium text-[#717171] mb-4">Level Distribution</p>
           <div className="w-full h-4 rounded-full flex overflow-hidden">
-            {Object.entries(level_distribution).map(([lvl, count]: any) => {
-              const pct = (count / totalRecords) * 100;
+            {Object.entries(level_distribution).map(([lvl, count]: [string, unknown]) => {
+              const numCount = count as number;
+              const pct = (numCount / totalRecords) * 100;
               return (
                 <div
                   key={lvl}
@@ -167,13 +168,13 @@ export default async function CompanyPage({
             })}
           </div>
           <div className="flex flex-wrap gap-2 mt-3">
-            {Object.entries(level_distribution).map(([lvl, count]: any) => (
+            {Object.entries(level_distribution).map(([lvl, count]: [string, unknown]) => (
               <span key={lvl} className="text-xs text-gray-600">
                 <span
                   className="inline-block w-2 h-2 rounded-full mr-1"
                   style={{ backgroundColor: getLevelColorHex(lvl) }}
                 />
-                {lvl}: {count}
+                {lvl}: {count as number}
               </span>
             ))}
           </div>
@@ -195,7 +196,7 @@ export default async function CompanyPage({
             </tr>
           </thead>
           <tbody className="divide-y divide-[#EBEBEB] bg-white">
-            {salaries.map((salary: any) => (
+            {salaries.map((salary: {id: string, role: string, level: string, location: string, experience_years: string, base_salary: string, currency: string, stock: string, total_compensation: string}) => (
               <tr key={salary.id} className="hover:bg-[#F2F2F2] transition-colors">
                 <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-[#222222] sm:pl-6">
                   {salary.role}

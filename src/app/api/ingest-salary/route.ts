@@ -8,12 +8,12 @@ const ingestSchema = z.object({
   role: z.string().min(1, "Role is required"),
   level: z.nativeEnum(Level, { message: "Level must be one of: L3, L4, L5, L6, SDE_I, SDE_II, SDE_III, STAFF, PRINCIPAL, IC4, IC5" }),
   location: z.string().min(1, "Location is required"),
-  currency: z.nativeEnum(Currency, { message: "Currency must be INR, USD, GBP, or EUR" }).optional().default(Currency.USD),
+  currency: z.nativeEnum(Currency, { message: "Currency must be INR, USD, GBP, or EUR" }),
   experience_years: z.number().int().positive("Experience years must be > 0").lt(51, "Experience years must be < 51"),
   base_salary: z.number().int().positive("Base salary must be > 0"),
   bonus: z.number().int().min(0).optional().default(0),
   stock: z.number().int().min(0).optional().default(0),
-  confidence_score: z.number().min(0.0).max(1.0, "Confidence score must be between 0.0 and 1.0").optional().default(0.5),
+  confidence_score: z.number().min(0.0).max(1.0, "Confidence score must be between 0.0 and 1.0"),
 });
 
 function normalizeCompany(name: string): { slug: string, normalized: string } {
@@ -44,13 +44,13 @@ export async function POST(request: NextRequest) {
     let body;
     try {
       body = await request.json();
-    } catch (e) {
+    } catch {
       return NextResponse.json({ error: true, message: 'Invalid JSON payload' }, { status: 400 });
     }
 
     const parsed = ingestSchema.safeParse(body);
     if (!parsed.success) {
-      const firstError = (parsed.error as any).errors[0] || (parsed.error as any).issues[0];
+      const firstError = parsed.error.issues[0];
       return NextResponse.json(
         { error: true, field: firstError.path.join('.'), message: firstError.message },
         { status: 400 }
@@ -88,8 +88,8 @@ export async function POST(request: NextRequest) {
         location: { equals: data.location, mode: 'insensitive' },
         submitted_at: { gte: fortyEightHoursAgo },
         base_salary: {
-          gte: data.base_salary - tenPercent,
-          lte: data.base_salary + tenPercent,
+          gte: BigInt(Math.floor(data.base_salary - tenPercent)),
+          lte: BigInt(Math.ceil(data.base_salary + tenPercent)),
         }
       }
     });
@@ -99,6 +99,19 @@ export async function POST(request: NextRequest) {
         { error: true, message: 'Duplicate record detected within 48 hours' },
         { status: 409 }
       );
+    }
+
+    let finalConfidenceScore = data.confidence_score;
+
+    if (finalConfidenceScore < 0.4) {
+      return NextResponse.json(
+        { error: true, message: 'Confidence score < 0.4 requires manual human review. Record not auto-inserted.' }, 
+        { status: 422 }
+      );
+    }
+
+    if (finalConfidenceScore < 0.5) {
+      finalConfidenceScore = 0.5;
     }
 
     // Insert record
@@ -114,7 +127,7 @@ export async function POST(request: NextRequest) {
         bonus: BigInt(data.bonus),
         stock: BigInt(data.stock),
         total_compensation: BigInt(total_compensation),
-        confidence_score: new Prisma.Decimal(data.confidence_score),
+        confidence_score: new Prisma.Decimal(finalConfidenceScore),
         source: Source.SCRAPED, // Setting to SCRAPED for ingest API
         is_verified: false
       }

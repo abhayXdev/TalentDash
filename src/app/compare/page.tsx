@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 function formatCurrency(amountStr: string) {
@@ -15,13 +15,15 @@ function formatDelta(amount: number) {
   return <span className="text-[#D93025] font-medium">-{Math.abs(amount).toLocaleString()}</span>;
 }
 
-export default function ComparePage() {
+function CompareContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [salaries, setSalaries] = useState<any[]>([]);
   const [s1, setS1] = useState(searchParams.get('s1') || '');
   const [s2, setS2] = useState(searchParams.get('s2') || '');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [compareData, setCompareData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -209,5 +211,13 @@ export default function ComparePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ComparePage() {
+  return (
+    <Suspense fallback={<div className="max-w-7xl mx-auto px-4 py-10">Loading compare...</div>}>
+      <CompareContent />
+    </Suspense>
   );
 }

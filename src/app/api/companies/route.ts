@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
         orderBy: { name: 'asc' },
         include: {
           _count: {
-            select: { salaries: true, reviews: true }
+            select: { salaries: true }
           }
         }
       }),

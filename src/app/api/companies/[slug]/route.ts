@@ -25,9 +25,13 @@ export async function GET(
     // 1. Median Total Compensation
     let median_total_compensation = "0";
     if (rawSalaries.length > 0) {
-      // Already sorted descending
       const mid = Math.floor(rawSalaries.length / 2);
-      median_total_compensation = rawSalaries[mid].total_compensation.toString();
+      if (rawSalaries.length % 2 === 0) {
+        const sum = rawSalaries[mid - 1].total_compensation + rawSalaries[mid].total_compensation;
+        median_total_compensation = (sum / 2n).toString();
+      } else {
+        median_total_compensation = rawSalaries[mid].total_compensation.toString();
+      }
     }
 
     // 2. Level Distribution

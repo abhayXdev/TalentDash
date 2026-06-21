@@ -87,14 +87,14 @@ export default async function SalariesPage({
                     <th className="px-3 py-3.5 text-right text-sm font-semibold text-[#222222]">Base</th>
                     <th className="px-3 py-3.5 text-right text-sm font-semibold text-[#222222]">Stock</th>
                     <th className="px-3 py-3.5 text-right text-sm font-semibold text-[#222222] pr-6 hover:bg-[#F2F2F2] cursor-pointer">
-                      <Link href={`?${new URLSearchParams({...params as any, sort: params.sort === 'total_comp_desc' ? 'total_comp_asc' : 'total_comp_desc'}).toString()}`}>
+                      <Link href={`?${new URLSearchParams({...params as Record<string, string>, sort: params.sort === 'total_comp_desc' ? 'total_comp_asc' : 'total_comp_desc'}).toString()}`}>
                         Total Comp {params.sort === 'total_comp_desc' ? '↓' : params.sort === 'total_comp_asc' ? '↑' : '↕'}
                       </Link>
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#EBEBEB] bg-[#FFFFFF]">
-                  {salaries && salaries.map((salary: any) => (
+                  {salaries && salaries.map((salary: {id: string, company: {name: string}, role: string, level: string, location: string, experience_years: string, base_salary: string, currency: string, stock: string, total_compensation: string}) => (
                     <tr key={salary.id} className="hover:bg-[#F2F2F2] transition-colors">
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-[#222222] sm:pl-6">
                         {salary.company.name}
@@ -146,7 +146,7 @@ export default async function SalariesPage({
                     <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
                       {meta.page > 1 && (
                         <Link
-                          href={`?${new URLSearchParams({...params as any, page: String(meta.page - 1)}).toString()}`}
+                          href={`?${new URLSearchParams({...params as Record<string, string>, page: String(meta.page - 1)}).toString()}`}
                           className="relative inline-flex items-center rounded-l-md px-2 py-2 text-[#717171] ring-1 ring-inset ring-[#EBEBEB] hover:bg-[#F2F2F2]"
                         >
                           Previous
@@ -154,7 +154,7 @@ export default async function SalariesPage({
                       )}
                       {meta.page < meta.totalPages && (
                         <Link
-                          href={`?${new URLSearchParams({...params as any, page: String(meta.page + 1)}).toString()}`}
+                          href={`?${new URLSearchParams({...params as Record<string, string>, page: String(meta.page + 1)}).toString()}`}
                           className={`relative inline-flex items-center ${meta.page === 1 ? 'rounded-l-md' : ''} rounded-r-md px-2 py-2 text-[#717171] ring-1 ring-inset ring-[#EBEBEB] hover:bg-[#F2F2F2]`}
                         >
                           Next
