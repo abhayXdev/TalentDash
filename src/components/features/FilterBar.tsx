@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 const LEVELS = ['L3', 'L4', 'L5', 'L6', 'SDE_I', 'SDE_II', 'SDE_III', 'STAFF', 'PRINCIPAL', 'IC4', 'IC5'];
 
@@ -14,6 +14,9 @@ export default function FilterBar() {
   const [location, setLocation] = useState(searchParams.get('location') || '');
   const [level, setLevel] = useState<string[]>(searchParams.getAll('level') || []);
   const [currency, setCurrency] = useState(searchParams.get('currency') || 'USD');
+
+  const initialMount = useRef(true);
+  const prevFilters = useRef({ company, role, location, level: level.join(','), currency });
 
   const updateFilters = useCallback(() => {
     const params = new URLSearchParams();
@@ -33,10 +36,16 @@ export default function FilterBar() {
 
   // Debounced search for text fields
   useEffect(() => {
-    const timer = setTimeout(() => {
-      updateFilters();
-    }, 300);
-    return () => clearTimeout(timer);
+    const currentFilters = { company, role, location, level: level.join(','), currency };
+    const hasChanged = JSON.stringify(prevFilters.current) !== JSON.stringify(currentFilters);
+    
+    if (hasChanged) {
+      prevFilters.current = currentFilters;
+      const timer = setTimeout(() => {
+        updateFilters();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
   }, [company, role, location, level, currency, updateFilters]);
 
   const toggleLevel = (l: string) => {
