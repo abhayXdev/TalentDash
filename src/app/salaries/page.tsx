@@ -18,13 +18,13 @@ function formatCurrency(amountStr: string, fromCurrency: string, toCurrency: str
   if (fromCurrency !== toCurrency) {
     if (fromCurrency === 'USD' && toCurrency === 'INR') amount = amount * CURRENCY_CONFIG.EXCHANGE_RATE_USD_TO_INR;
     if (fromCurrency === 'INR' && toCurrency === 'USD') amount = amount / CURRENCY_CONFIG.EXCHANGE_RATE_USD_TO_INR;
-    // simplify GBP/EUR logic for this trial
+    if (fromCurrency === 'GBP' && toCurrency === 'INR') amount = amount * CURRENCY_CONFIG.EXCHANGE_RATE_GBP_TO_INR;
+    if (fromCurrency === 'EUR' && toCurrency === 'INR') amount = amount * CURRENCY_CONFIG.EXCHANGE_RATE_EUR_TO_INR;
   }
 
   const locale = toCurrency === 'INR' ? 'en-IN' : 'en-US';
   const symbol = toCurrency === 'INR' ? '₹' : '$';
-  
-  return `${symbol}${amount.toLocaleString(locale, { maximumFractionDigits: 0 })}`;
+  return symbol + amount.toLocaleString(locale, { maximumFractionDigits: 0 });
 }
 
 export const metadata = {
@@ -108,7 +108,7 @@ export default async function SalariesPage({
                         {salary.company.name}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-[#484848]">
-                        {salary.role.name}
+                        {salary.role}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm">
                         <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${getLevelColor(salary.level)}`}>

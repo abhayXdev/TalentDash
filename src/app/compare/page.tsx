@@ -11,8 +11,8 @@ function formatCurrency(amountStr: string) {
 
 function formatDelta(amount: number) {
   if (amount === 0) return "0";
-  if (amount > 0) return <span className="text-green-600 font-medium">+{amount.toLocaleString()}</span>;
-  return <span className="text-red-600 font-medium">-{Math.abs(amount).toLocaleString()}</span>;
+  if (amount > 0) return <span className="text-[#008A05] font-medium">+{amount.toLocaleString()}</span>;
+  return <span className="text-[#D93025] font-medium">-{Math.abs(amount).toLocaleString()}</span>;
 }
 
 export default function ComparePage() {
@@ -85,7 +85,7 @@ export default function ComparePage() {
             <option value="">-- Choose a record --</option>
             {salaries.map(s => (
               <option key={s.id} value={s.id}>
-                {s.company.name} - {s.role.name} ({s.level}) - {s.location}
+                {s.company.name} - {s.role} ({s.level}) - {s.location}
               </option>
             ))}
           </select>
@@ -100,7 +100,7 @@ export default function ComparePage() {
             <option value="">-- Choose a record --</option>
             {salaries.map(s => (
               <option key={s.id} value={s.id}>
-                {s.company.name} - {s.role.name} ({s.level}) - {s.location}
+                {s.company.name} - {s.role} ({s.level}) - {s.location}
               </option>
             ))}
           </select>
@@ -108,7 +108,21 @@ export default function ComparePage() {
       </div>
 
       {/* Comparison Results */}
-      {loading && s1 && s2 && <p className="text-gray-500 text-center py-10">Loading comparison...</p>}
+      {loading && s1 && s2 && (
+        <div className="bg-white rounded-lg shadow-sm border border-[#EBEBEB] overflow-hidden animate-pulse">
+          <div className="h-14 bg-[#F7F7F7] border-b border-[#EBEBEB] w-full flex">
+             <div className="w-1/4 h-full"></div>
+             <div className="w-1/4 h-full border-l border-[#EBEBEB]"></div>
+             <div className="w-1/4 h-full border-l border-[#EBEBEB]"></div>
+             <div className="w-1/4 h-full border-l border-[#EBEBEB]"></div>
+          </div>
+          {[...Array(6)].map((_, i) => (
+             <div key={i} className="h-16 border-b border-[#EBEBEB] w-full flex items-center px-6">
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+             </div>
+          ))}
+        </div>
+      )}
       
       {!loading && compareData && compareData.error && (
         <div className="bg-red-50 p-4 rounded-md border border-red-200 text-red-700 text-center">
@@ -125,7 +139,7 @@ export default function ComparePage() {
                 <th className="py-4 px-4 text-left text-lg font-bold text-[#222222] w-1/4">
                   {compareData.record_1.company.name}
                   {Number(compareData.record_1.total_compensation) > Number(compareData.record_2.total_compensation) && (
-                    <span className="ml-2 inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+                    <span className="ml-2 inline-flex items-center rounded-full bg-[#E0F2FE] px-2.5 py-0.5 text-xs font-medium text-[#0369A1] ring-1 ring-inset ring-[#0369A1]/20">
                       Higher TC
                     </span>
                   )}
@@ -133,7 +147,7 @@ export default function ComparePage() {
                 <th className="py-4 px-4 text-left text-lg font-bold text-[#222222] w-1/4">
                   {compareData.record_2.company.name}
                   {Number(compareData.record_2.total_compensation) > Number(compareData.record_1.total_compensation) && (
-                    <span className="ml-2 inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+                    <span className="ml-2 inline-flex items-center rounded-full bg-[#E0F2FE] px-2.5 py-0.5 text-xs font-medium text-[#0369A1] ring-1 ring-inset ring-[#0369A1]/20">
                       Higher TC
                     </span>
                   )}
@@ -144,8 +158,8 @@ export default function ComparePage() {
             <tbody className="divide-y divide-[#EBEBEB] bg-[#FFFFFF]">
               <tr className="hover:bg-[#F2F2F2]">
                 <td className="py-4 pl-6 text-sm font-medium text-[#717171]">Role</td>
-                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_1.role.name}</td>
-                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_2.role.name}</td>
+                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_1.role}</td>
+                <td className="py-4 px-4 text-sm text-[#222222]">{compareData.record_2.role}</td>
                 <td className="py-4 pr-6 text-right text-sm text-gray-500">—</td>
               </tr>
               <tr className="hover:bg-[#F2F2F2]">

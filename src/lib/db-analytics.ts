@@ -10,7 +10,7 @@ export interface PercentileResult {
 /**
  * Calculates total compensation percentiles for a specific role globally.
  */
-export async function getGlobalRolePercentiles(roleId: string): Promise<PercentileResult | null> {
+export async function getGlobalRolePercentiles(role: string): Promise<PercentileResult | null> {
   const result = await prisma.$queryRaw<
     Array<{
       p25: number | null;
@@ -24,8 +24,8 @@ export async function getGlobalRolePercentiles(roleId: string): Promise<Percenti
       PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY total_compensation) AS p50,
       PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY total_compensation) AS p75,
       PERCENTILE_CONT(0.90) WITHIN GROUP (ORDER BY total_compensation) AS p90
-    FROM "SalarySubmission"
-    WHERE role_id = ${roleId}
+    FROM "Salary"
+    WHERE role = ${role}
   `;
 
   if (!result || result.length === 0 || result[0].p50 === null) {
@@ -43,7 +43,7 @@ export async function getGlobalRolePercentiles(roleId: string): Promise<Percenti
 /**
  * Calculates total compensation percentiles for a specific company and role.
  */
-export async function getCompanyRolePercentiles(companyId: string, roleId: string): Promise<PercentileResult | null> {
+export async function getCompanyRolePercentiles(companyId: string, role: string): Promise<PercentileResult | null> {
   const result = await prisma.$queryRaw<
     Array<{
       p25: number | null;
@@ -57,8 +57,8 @@ export async function getCompanyRolePercentiles(companyId: string, roleId: strin
       PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY total_compensation) AS p50,
       PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY total_compensation) AS p75,
       PERCENTILE_CONT(0.90) WITHIN GROUP (ORDER BY total_compensation) AS p90
-    FROM "SalarySubmission"
-    WHERE company_id = ${companyId} AND role_id = ${roleId}
+    FROM "Salary"
+    WHERE company_id = ${companyId} AND role = ${role}
   `;
 
   if (!result || result.length === 0 || result[0].p50 === null) {
@@ -80,7 +80,7 @@ export async function getCompanyOverallMedian(companyId: string): Promise<number
   const result = await prisma.$queryRaw<Array<{ p50: number | null }>>`
     SELECT 
       PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY total_compensation) AS p50
-    FROM "SalarySubmission"
+    FROM "Salary"
     WHERE company_id = ${companyId}
   `;
 
@@ -91,7 +91,7 @@ export async function getCompanyOverallMedian(companyId: string): Promise<number
 /**
  * Role-based compensation distribution: Groups salaries into buckets (e.g., for histograms)
  */
-export async function getRoleCompensationDistribution(roleId: string, bucketSize: number = 20000) {
+export async function getRoleCompensationDistribution(role: string, bucketSize: number = 20000) {
   // Using raw SQL to group into buckets
   const result = await prisma.$queryRaw<
     Array<{
@@ -102,8 +102,8 @@ export async function getRoleCompensationDistribution(roleId: string, bucketSize
     SELECT 
       FLOOR(total_compensation / ${bucketSize}) * ${bucketSize} AS bucket_floor,
       COUNT(*)::int AS count
-    FROM "SalarySubmission"
-    WHERE role_id = ${roleId}
+    FROM "Salary"
+    WHERE role = ${role}
     GROUP BY bucket_floor
     ORDER BY bucket_floor ASC
   `;

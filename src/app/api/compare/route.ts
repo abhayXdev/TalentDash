@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+function isValidUUID(str: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -15,20 +19,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: true, message: 'Identical records cannot be compared' }, { status: 400 });
     }
 
+    if (!isValidUUID(s1) || !isValidUUID(s2)) {
+      return NextResponse.json(
+        { error: true, message: 'One or both record IDs are invalid' },
+        { status: 400 }
+      );
+    }
+
     const [record1, record2] = await Promise.all([
-      prisma.salarySubmission.findUnique({
+      prisma.salary.findUnique({
         where: { id: s1 },
-        include: {
-          company: { select: { name: true, slug: true, logo_url: true } },
-          role: { select: { name: true, slug: true } }
-        }
+        include: { company: true }
       }),
-      prisma.salarySubmission.findUnique({
+      prisma.salary.findUnique({
         where: { id: s2 },
-        include: {
-          company: { select: { name: true, slug: true, logo_url: true } },
-          role: { select: { name: true, slug: true } }
-        }
+        include: { company: true }
       })
     ]);
 
@@ -48,7 +53,6 @@ export async function GET(request: NextRequest) {
       base_salary: r.base_salary.toString(),
       bonus: r.bonus.toString(),
       stock: r.stock.toString(),
-      signing_bonus: r.signing_bonus.toString(),
       total_compensation: r.total_compensation.toString(),
       confidence_score: r.confidence_score.toNumber(),
     });

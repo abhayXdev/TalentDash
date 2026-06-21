@@ -17,12 +17,9 @@ export async function GET(
     }
 
     // Fetch all salaries for this company to compute median and level distribution
-    const rawSalaries = await prisma.salarySubmission.findMany({
+    const rawSalaries = await prisma.salary.findMany({
       where: { company_id: company.id },
-      orderBy: { total_compensation: 'desc' },
-      include: {
-        role: { select: { name: true, slug: true, category: true } }
-      }
+      orderBy: { total_compensation: 'desc' }
     });
 
     // 1. Median Total Compensation
@@ -45,7 +42,6 @@ export async function GET(
       base_salary: salary.base_salary.toString(),
       bonus: salary.bonus.toString(),
       stock: salary.stock.toString(),
-      signing_bonus: salary.signing_bonus.toString(),
       total_compensation: salary.total_compensation.toString(),
       confidence_score: salary.confidence_score.toNumber(),
     }));

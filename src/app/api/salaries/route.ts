@@ -22,10 +22,10 @@ export async function GET(request: NextRequest) {
     
     const skip = (page - 1) * limit;
 
-    const where: Prisma.SalarySubmissionWhereInput = {};
+    const where: Prisma.SalaryWhereInput = {};
     
     if (roleString) {
-      where.role = { name: { contains: roleString, mode: 'insensitive' } };
+      where.role = { contains: roleString, mode: 'insensitive' };
     }
     if (companyString) {
       where.company = { normalized_name: { contains: companyString, mode: 'insensitive' } };
@@ -40,21 +40,20 @@ export async function GET(request: NextRequest) {
       where.currency = currencyString as Currency;
     }
 
-    let orderBy: Prisma.SalarySubmissionOrderByWithRelationInput[] = [{ total_compensation: 'desc' }, { id: 'asc' }];
+    let orderBy: Prisma.SalaryOrderByWithRelationInput[] = [{ total_compensation: 'desc' }, { id: 'asc' }];
     if (sort === 'date_desc') orderBy = [{ submitted_at: 'desc' }, { id: 'asc' }];
     if (sort === 'total_comp_asc') orderBy = [{ total_compensation: 'asc' }, { id: 'asc' }];
     if (sort === 'total_comp_desc') orderBy = [{ total_compensation: 'desc' }, { id: 'asc' }];
 
     const [totalCount, rawSalaries] = await Promise.all([
-      prisma.salarySubmission.count({ where }),
-      prisma.salarySubmission.findMany({
+      prisma.salary.count({ where }),
+      prisma.salary.findMany({
         where,
         take: limit,
         skip,
         orderBy,
         include: {
-          company: { select: { name: true, slug: true, logo_url: true } },
-          role: { select: { name: true, slug: true, category: true } }
+          company: { select: { name: true, slug: true } }
         }
       })
     ]);
@@ -65,7 +64,6 @@ export async function GET(request: NextRequest) {
       base_salary: salary.base_salary.toString(),
       bonus: salary.bonus.toString(),
       stock: salary.stock.toString(),
-      signing_bonus: salary.signing_bonus.toString(),
       total_compensation: salary.total_compensation.toString(),
       confidence_score: salary.confidence_score.toNumber(),
     }));

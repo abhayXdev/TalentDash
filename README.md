@@ -21,6 +21,16 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Live URL
+*(Pending Vercel/Cloudflare deployment — Replace this string with live URL upon deploy)*
+
+## Environment Variables
+Create a `.env` file at the root of `talent-dash` with the following:
+```env
+# Neon PostgreSQL Connection String
+DATABASE_URL="postgresql://username:password@host/dbname?sslmode=require"
+```
+
 ## Architecture Decisions
 
 ### Rendering Strategies
@@ -45,3 +55,4 @@ We enforce data integrity strictly at the database level:
 ### Scope & Trade-Offs under Time Pressure
 - **Simplified GBP/EUR Currency Conversions:** The currency formatter handles dynamic INR/USD conversion, but GBP and EUR use a simplistic fallback for this MVP scope.
 - **Client Component on `/compare`:** Due to rapid dynamic state interactions, the compare page leans heavily on client-side React. While SSR is generally preferred, the interactivity and real-time dropdown population justified a standard SPA approach here.
+- **No Self-Hosted Images:** Because the `Company` schema specified by the data contract (B1) omitted a `logo_url` field, I chose not to render company logos on the frontend rather than break the database contract. This guarantees we don't encounter CLS (layout shift) issues from unoptimized images.
