@@ -1,43 +1,78 @@
-# TalentDash
+<div align="center">
+  <h1>🚀 TalentDash</h1>
+  <p><strong>A Structured, Comparable, and Decision-Ready Career Intelligence Platform</strong></p>
+</div>
 
-TalentDash is a structured, comparable, and decision-ready career intelligence platform. It provides insights into software engineer compensation across top companies.
+---
 
-## Setup Instructions
+## 📖 Overview
 
-### Environment Variables
-Create a `.env` file in the root directory with the following variables:
-```env
-# Neon PostgreSQL database URL
-DATABASE_URL="postgresql://username:password@host/dbname?sslmode=require"
+TalentDash is an advanced career intelligence platform designed to democratize compensation data for software engineers. By aggregating, validating, and structuring compensation insights across top-tier technology companies, TalentDash empowers professionals to make informed, data-driven career decisions.
 
-# Base URL for API fetching (during local development)
-NEXT_PUBLIC_SITE_URL="http://localhost:3000"
+## ✨ Key Features
 
-# Auto-populated by Vercel for the live site
-NEXT_PUBLIC_VERCEL_URL=""
+- **Standardized Compensation Metrics**: Automatically calculates and verifies total compensation (Base + Bonus + Equity) for accurate, apples-to-apples comparisons.
+- **Instant Search & Filtering**: Lightning-fast API routes for querying specific roles, levels, and geographic locations.
+- **SEO-Optimized Static Pages**: Company profiles are pre-rendered at build time with ISR (Incremental Static Regeneration) for unparalleled performance and search engine visibility.
+- **Responsive & Accessible UI**: A fully custom-built Tailwind CSS interface designed from the ground up to ensure minimal bundle size and maximum responsiveness.
+
+## 🛠️ Technology Stack
+
+- **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Database**: [PostgreSQL](https://www.postgresql.org/) (Serverless via [Neon](https://neon.tech/))
+- **ORM**: [Prisma](https://www.prisma.io/)
+- **Deployment**: Optimized for Vercel / Cloudflare Pages Edge infrastructure
+
+## 🚀 Getting Started
+
+Follow these instructions to set up the project locally.
+
+### 1. Clone & Install Dependencies
+
+```bash
+git clone https://github.com/your-username/talent-dash.git
+cd talent-dash
+npm install
 ```
 
-### Database Initialization & Seeding
-We use Prisma with a PostgreSQL database (Neon).
-To push the schema and seed the initial company and salary data, run:
+### 2. Environment Configuration
+
+Create a `.env` file in the root directory and configure the required environment variables:
+
+```env
+# Database Connection
+DATABASE_URL="postgresql://username:password@host/dbname?sslmode=require"
+
+# Application URLs
+NEXT_PUBLIC_SITE_URL="http://localhost:3000"
+NEXT_PUBLIC_VERCEL_URL=""
+```
+*(Note: Keep your database credentials secure. Never commit your `.env` file to version control.)*
+
+### 3. Database Initialization & Seeding
+
+We utilize Prisma to manage our PostgreSQL schema. To initialize the database and populate it with initial data, run:
+
 ```bash
 npx prisma db push
 npx prisma db seed
 ```
 
-### Running Locally
+### 4. Run the Development Server
+
 ```bash
-npm install
 npm run dev
 ```
 
-## Architecture Decisions
+Navigate to [http://localhost:3000](http://localhost:3000) to view the application.
 
-1. **Framework**: Next.js 15 (App Router). Used for its superior Static Site Generation (SSG) capabilities to generate SEO-friendly static assets.
-2. **Styling**: Tailwind CSS built completely from scratch without external UI component libraries to ensure performance and bundle size efficiency.
-3. **Database & ORM**: PostgreSQL (hosted on Neon for serverless scale) interacted with via Prisma for type-safe database queries.
+## 🏗️ Architecture & Engineering Decisions
+
+1. **Next.js App Router**: Chosen for its superior Static Site Generation (SSG) capabilities, enabling fast, SEO-friendly static asset generation.
+2. **Custom Tailwind CSS**: Built completely from scratch without external component libraries to enforce strict performance budgets and reduce bundle size.
+3. **Database Architecture**: PostgreSQL hosted on Neon provides serverless scalability, interfaced via Prisma to guarantee type-safe database queries and migrations.
 4. **Rendering Strategy**:
-   - `generateStaticParams` for Company pages, allowing caching of static routes with ISR fallback for dynamic edge cases.
-   - Dynamic API route fetching for search queries/comparisons ensuring instant data retrieval.
-5. **Data Contract**: `total_compensation` is calculated programmatically (Base + Bonus + Stock) on data ingest, keeping the source-of-truth reliable.
-6. **Deployments**: Intended for Edge and Vercel/Cloudflare Pages for near-zero infrastructure cost and infinite global scale.
+   - `generateStaticParams` handles Company pages, utilizing aggressive caching with ISR fallback for dynamic edge cases.
+   - Real-time API route fetching handles complex search queries and comparisons, ensuring instant data retrieval.
+5. **Data Integrity**: The `total_compensation` metric is strictly calculated programmatically upon data ingestion, maintaining a highly reliable source-of-truth.
