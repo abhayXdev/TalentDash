@@ -30,7 +30,7 @@ export default function FilterBar({ availableRoles = [], availableLocations = []
   const [role, setRole] = useState(searchParams.get('role') || '');
   const [location, setLocation] = useState(searchParams.get('location') || '');
   const [level, setLevel] = useState<string[]>(searchParams.getAll('level') || []);
-  const [currency, setCurrency] = useState(searchParams.get('currency') || 'USD');
+  const [currency, setCurrency] = useState(searchParams.get('currency') || 'INR');
 
   const prevFilters = useRef({ company, role, location, level: level.join(','), currency });
 

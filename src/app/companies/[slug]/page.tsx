@@ -3,23 +3,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Metadata } from 'next';
 import CompanyLogo from '@/components/ui/CompanyLogo';
+import Badge from '@/components/ui/Badge';
 
-function getLevelBadgeClass(level: string) {
-  const lvl = level.toUpperCase();
-  if (lvl.includes('L3') || lvl.includes('E3') || lvl.includes('ICT2') || lvl.includes('SDE_I')) {
-    return 'bg-[#E1F5FE] text-[#0288D1]';
-  }
-  if (lvl.includes('L4') || lvl.includes('E4') || lvl.includes('ICT3') || lvl.includes('SDE_II')) {
-    return 'bg-[#E8F5E9] text-[#2E7D32]';
-  }
-  if (lvl.includes('L5') || lvl.includes('E5') || lvl.includes('ICT4') || lvl.includes('SDE_III') || lvl.includes('SENIOR')) {
-    return 'bg-[#FFF8E1] text-[#F57F17]';
-  }
-  if (lvl.includes('L6') || lvl.includes('E6') || lvl.includes('ICT5') || lvl.includes('STAFF')) {
-    return 'bg-[#FFEBEE] text-[#C62828]';
-  }
-  return 'bg-[#F3E8FF] text-[#7E22CE]';
-}
 
 function formatMoney(amountStr: string, isShort = false) {
   const inrValue = Number(amountStr);
@@ -321,9 +306,7 @@ export default async function CompanyPage({
                     <td className="p-4">
                       <div className="font-bold text-on-surface">{salary.role}</div>
                       <div className="flex items-center gap-1.5 mt-1">
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${getLevelBadgeClass(salary.level)}`}>
-                          {salary.level}
-                        </span>
+                        <Badge level={salary.level} />
                       </div>
                     </td>
                     <td className="p-4 text-on-surface-variant hidden sm:table-cell">{salary.location}</td>
