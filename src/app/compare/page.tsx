@@ -69,7 +69,11 @@ function CompareContent() {
       .then(res => res.json())
       .then(json => {
         if (json.error) setError(json.message || 'Comparison failed');
-        else setResult(json.data);
+        else setResult({
+          record1: json.data.record_1,
+          record2: json.data.record_2,
+          delta: json.data.delta,
+        });
       })
       .catch(() => setError('Failed to fetch comparison'))
       .finally(() => setLoading(false));
