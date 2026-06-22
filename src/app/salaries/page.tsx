@@ -240,7 +240,7 @@ export default async function SalariesPage({
                 <tbody className="divide-y divide-surface-container-high bg-surface-container-lowest">
                   {salaries.length > 0 ? (
                     salaries.map((salary: {id: string, company: {name: string}, role: string, level: string, location: string, experience_years: number, base_salary: string, bonus: string, currency: string, stock: string, total_compensation: string}) => (
-                      <tr key={salary.id} className="hover:bg-surface-container-low transition-colors">
+                      <tr key={salary.id} className="hover:bg-surface-container-low hover:shadow-[inset_4px_0_0_0_var(--color-secondary)] transition-all cursor-pointer group">
                         <td className="py-4 px-5">
                           <div className="flex items-center gap-3">
                             <CompanyLogo name={salary.company.name} />

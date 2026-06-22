@@ -11,53 +11,46 @@
   --font-headline-h2: var(--font-inter), system-ui, sans-serif;
   --font-headline-h1: var(--font-inter), system-ui, sans-serif;
 
-  --color-on-primary-container: #61000e;
-  --color-surface-container-lowest: #ffffff;
-  --color-on-tertiary-fixed-variant: #474746;
-  --color-background: #f9f9f9;
-  --color-primary-container: #ff5a5f;
-  --color-surface-bright: #f9f9f9;
-  --color-secondary-fixed-dim: #94ccff;
-  --color-secondary-fixed: #cde5ff;
-  --color-surface-dim: #dadada;
-  --color-surface-container-high: #e8e8e8;
-  --color-primary-fixed: #ffdad8;
-  --color-on-tertiary: #ffffff;
-  --color-primary: #b52330;
-  --color-on-background: #1a1c1c;
-  --color-tertiary-fixed-dim: #c8c6c5;
-  --color-surface-container-highest: #e2e2e2;
-  --color-on-secondary-fixed-variant: #004b74;
-  --color-tertiary-container: #959393;
-  --color-outline-variant: #e2bebc;
-  --color-secondary: #006399;
-  --color-error-container: #ffdad6;
-  --color-on-surface-variant: #5a403f;
-  --color-on-primary: #ffffff;
-  --color-on-primary-fixed-variant: #92001b;
-  --color-surface: #f9f9f9;
-  --color-surface-container: #eeeeee;
-  --color-inverse-surface: #2f3131;
-  --color-on-secondary-container: #004f7b;
-  --color-on-surface: #1a1c1c;
-  --color-primary-fixed-dim: #ffb3b0;
-  --color-on-secondary-fixed: #001d32;
-  --color-on-primary-fixed: #410007;
-  --color-outline: #8e706f;
-  --color-on-tertiary-container: #2c2c2c;
-  --color-tertiary-fixed: #e5e2e1;
-  --color-inverse-primary: #ffb3b0;
-  --color-on-error: #ffffff;
-  --color-on-tertiary-fixed: #1b1c1c;
-  --color-tertiary: #5f5e5e;
-  --color-secondary-container: #7bc2ff;
-  --color-surface-variant: #e2e2e2;
-  --color-error: #ba1a1a;
-  --color-surface-tint: #b52330;
-  --color-inverse-on-surface: #f1f1f1;
-  --color-on-error-container: #93000a;
-  --color-on-secondary: #ffffff;
-  --color-surface-container-low: #f3f3f3;
+  /* TalentDash Design System - Strict adherence to task.txt */
+  --color-primary-accent: #FF5A5F;
+  --color-deep-text: #222222;
+  --color-body-text: #484848;
+  --color-muted-text: #717171;
+  --color-surface-bg: #FFFFFF;
+  --color-app-bg: #F7F7F7;
+  --color-border-light: #EBEBEB;
+  --color-success-green: #008A05;
+  --color-warning-orange: #FFB400;
+  --color-error-red: #D93025;
+  --color-hover-surface: #F2F2F2;
+
+  /* Overriding default container mappings to our design system */
+  --color-background: var(--color-app-bg);
+  --color-surface: var(--color-app-bg);
+  --color-surface-bright: var(--color-app-bg);
+  --color-surface-container-lowest: var(--color-surface-bg);
+  --color-surface-container-low: var(--color-hover-surface);
+  --color-surface-container-high: var(--color-border-light);
+  --color-surface-container-highest: var(--color-border-light);
+  --color-surface-variant: var(--color-border-light);
+  --color-surface-dim: var(--color-border-light);
+  --color-outline: var(--color-border-light);
+  --color-outline-variant: var(--color-border-light);
+
+  /* Overriding default typography/foreground mappings */
+  --color-on-background: var(--color-deep-text);
+  --color-on-surface: var(--color-deep-text);
+  --color-on-surface-variant: var(--color-muted-text);
+  --color-inverse-surface: var(--color-deep-text);
+  --color-inverse-on-surface: var(--color-surface-bg);
+  
+  /* Semantic mappings */
+  --color-primary: #FF5A5F;
+  --color-primary-container: #FF5A5F;
+  --color-on-primary: #FFFFFF;
+  --color-secondary: #0369A1; /* Data Blue as requested for Total Comp */
+  --color-error: #D93025;
+  --color-on-error: #FFFFFF;
 
   --spacing-md: 24px;
   --spacing-xl: 80px;
@@ -68,9 +61,49 @@
   --spacing-gutter: 24px;
   --spacing-lg: 48px;
   --spacing-margin-mobile: 16px;
+  
+  /* Animations */
+  --animate-fade-in-up: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-fade-in: fade-in 0.4s ease-out forwards;
+  --animate-blob: blob 7s infinite;
+}
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
 }
 
 body {
   background-color: var(--color-background);
   color: var(--color-on-surface);
+  /* Subtle mesh gradient background */
+  background-image: radial-gradient(at 0% 0%, hsla(358, 100%, 68%, 0.05) 0px, transparent 50%),
+                    radial-gradient(at 100% 0%, hsla(200, 100%, 68%, 0.05) 0px, transparent 50%);
+  background-attachment: fixed;
 }
