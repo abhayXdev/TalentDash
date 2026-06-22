@@ -118,6 +118,11 @@ export async function generateMetadata({
     title: `${company.name} Salaries & Level Distribution | TalentDash`,
     description: `Detailed compensation data and level distribution for ${company.name}. See median TC, level breakdown, and individual salary records.`,
     alternates: { canonical: `https://talentdash.com/companies/${slug}` },
+    openGraph: {
+      title: `${company.name} Salaries & Level Distribution | TalentDash`,
+      description: `Detailed compensation data and level distribution for ${company.name}. See median TC, level breakdown, and individual salary records.`,
+      url: `https://talentdash.com/companies/${slug}`,
+    },
   };
 }
 
@@ -140,7 +145,26 @@ export default async function CompanyPage({
   const maxTC = totalRecords > 0 ? Number(salaries[0].total_compensation) : 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": company.name,
+            "url": `https://talentdash.com/companies/${company.slug}`,
+            "description": `Salary data and compensation intelligence for ${company.name}`,
+            "numberOfEmployees": company.headcount_range ? {
+              "@type": "QuantitativeValue",
+              "description": company.headcount_range
+            } : undefined,
+            "foundingDate": company.founded_year?.toString(),
+            "location": company.headquarters,
+          })
+        }}
+      />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
       <Link
         href="/companies"
         className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline uppercase tracking-wide cursor-pointer"
@@ -330,5 +354,6 @@ export default async function CompanyPage({
         </div>
       </section>
     </div>
+    </>
   );
 }

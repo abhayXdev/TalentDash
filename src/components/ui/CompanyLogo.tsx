@@ -1,7 +1,14 @@
-export default function CompanyLogo({ name }: { name: string }) {
+import Image from 'next/image';
+
+interface CompanyLogoProps {
+  name: string;
+  logoUrl?: string;
+  size?: number;
+}
+
+export default function CompanyLogo({ name, logoUrl, size = 32 }: CompanyLogoProps) {
   const initial = name.charAt(0).toUpperCase();
-  
-  // Generate a consistent gradient based on the first letter
+
   const gradients: Record<string, string> = {
     'A': 'from-red-400 to-pink-500',
     'B': 'from-orange-400 to-red-500',
@@ -33,8 +40,23 @@ export default function CompanyLogo({ name }: { name: string }) {
 
   const gradientClass = gradients[initial] || 'from-gray-400 to-gray-500';
 
+  if (logoUrl) {
+    return (
+      <Image
+        src={logoUrl}
+        alt={`${name} logo`}
+        width={size}
+        height={size}
+        className="rounded-lg object-contain"
+      />
+    );
+  }
+
   return (
-    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${gradientClass} flex items-center justify-center text-white font-bold text-sm shadow-sm border border-white/20`}>
+    <div
+      className={`bg-gradient-to-br ${gradientClass} flex items-center justify-center text-white font-bold shadow-sm border border-white/20 rounded-lg`}
+      style={{ width: size, height: size, fontSize: size * 0.4 }}
+    >
       {initial}
     </div>
   );
