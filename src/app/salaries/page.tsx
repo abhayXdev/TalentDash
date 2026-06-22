@@ -203,7 +203,7 @@ export default async function SalariesPage({
           </h1>
           <p className="mt-2 text-base text-muted-text">
             {meta?.total > 0
-              ? `Showing ${(meta.page - 1) * meta.limit + 1} to ${Math.min(meta.page * meta.limit, meta.total)} of ${meta.total.toLocaleString()} records`
+              ? `${meta.total.toLocaleString()} records found`
               : 'No records found'}
           </p>
         </div>
@@ -268,8 +268,10 @@ export default async function SalariesPage({
                         <td className="py-4 px-5 text-sm text-on-surface text-right font-mono">
                           {formatCurrency(salary.stock, salary.currency, displayCurrency)}
                         </td>
-                        <td className="py-4 px-5 text-base text-secondary font-bold text-right font-mono">
-                          {formatCurrency(salary.total_compensation, salary.currency, displayCurrency)}
+                        <td className="py-4 px-5 text-right">
+                          <span className="text-[22px] font-bold text-[#0369A1] font-mono leading-none">
+                            {formatCurrency(salary.total_compensation, salary.currency, displayCurrency)}
+                          </span>
                         </td>
                       </tr>
                     ))
