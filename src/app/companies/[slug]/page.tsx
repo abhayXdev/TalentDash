@@ -167,7 +167,7 @@ export default async function CompanyPage({
         </div>
 
         <Link
-          href={`/compare?s1=${slug}`}
+          href={`/compare?c1=${slug}`}
           className="bg-primary-container hover:bg-primary text-white font-semibold text-xs py-2 px-4 rounded-lg shadow-xs flex items-center gap-1.5 transition-colors self-start md:self-auto"
         >
           <span className="material-symbols-outlined text-[16px]">compare_arrows</span>

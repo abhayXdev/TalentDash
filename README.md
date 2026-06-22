@@ -9,6 +9,9 @@
 
 TalentDash is an advanced career intelligence platform designed to democratize compensation data for software engineers. By aggregating, validating, and structuring compensation insights across top-tier technology companies, TalentDash empowers professionals to make informed, data-driven career decisions.
 
+## 🌐 Live Demo
+**Live URL**: [https://talentdashindia.vercel.app/](https://talentdashindia.vercel.app/)
+
 ## ✨ Key Features
 
 - **Standardized Compensation Metrics**: Automatically calculates and verifies total compensation (Base + Bonus + Equity) for accurate, apples-to-apples comparisons.
@@ -37,7 +40,7 @@ Copy `.env.example` to `.env` and fill in your values:
 ### 1. Clone & Install Dependencies
 
 ```bash
-git clone https://github.com/your-username/talent-dash.git
+git clone https://github.com/abhayXdev/TalentDash.git
 cd talent-dash
 npm install
 ```

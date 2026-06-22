@@ -1,3 +1,16 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'TalentDash — Salary Intelligence for Indian Tech',
+  description: 'Compare verified salaries, read real reviews, and prepare for interviews. India\'s career intelligence platform for software engineers and tech professionals.',
+  openGraph: {
+    title: 'TalentDash — Salary Intelligence for Indian Tech',
+    description: 'Compare verified salaries, read real reviews, and prepare for interviews.',
+    url: 'https://talentdash.com',
+  },
+  alternates: { canonical: 'https://talentdash.com' },
+};
+
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 
